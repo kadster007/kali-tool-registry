@@ -1,0 +1,107 @@
+{
+  "name": "hping3",
+  "binary": "hping3",
+  "category": "network-testing",
+  "description": "Advanced packet crafting and network testing tool. Use for firewall testing, port probing, OS fingerprinting, and traceroute. Sends custom TCP/UDP/ICMP/RAW packets.",
+  "requires_root": true,
+  "lan_scope": true,
+  "presets": [
+    {
+      "id": "ping-sweep",
+      "name": "ICMP Ping",
+      "icon": "📡",
+      "description": "ICMP echo — like ping but more control.",
+      "command": "sudo hping3 -1 -c 4 {target}",
+      "requires_root": true,
+      "params": ["target"],
+      "expected_duration": "fast"
+    },
+    {
+      "id": "syn-scan",
+      "name": "SYN Port Probe",
+      "icon": "🔍",
+      "description": "Send SYN to a port, check if open/filtered.",
+      "command": "sudo hping3 -S -p {port} -c 3 {target}",
+      "requires_root": true,
+      "params": ["target", "port"],
+      "param_defaults": {"port": "80"},
+      "expected_duration": "fast"
+    },
+    {
+      "id": "port-scan",
+      "name": "Sequential Port Scan",
+      "icon": "🚪",
+      "description": "Scan a range of ports sequentially.",
+      "command": "sudo hping3 -S --scan {port_range} {target}",
+      "requires_root": true,
+      "params": ["target", "port_range"],
+      "param_defaults": {"port_range": "1-1000"},
+      "expected_duration": "medium"
+    },
+    {
+      "id": "traceroute",
+      "name": "TCP Traceroute",
+      "icon": "🗺",
+      "description": "Traceroute using TCP SYN (bypasses some firewalls).",
+      "command": "sudo hping3 -S -T -p {port} {target}",
+      "requires_root": true,
+      "params": ["target", "port"],
+      "param_defaults": {"port": "80"},
+      "expected_duration": "medium"
+    }
+  ],
+  "flags": {
+    "mode": {
+      "type": "select",
+      "label": "Packet Mode",
+      "options": [
+        {"value": "-1", "label": "ICMP"},
+        {"value": "-2", "label": "UDP"},
+        {"value": "-S", "label": "TCP SYN"},
+        {"value": "-A", "label": "TCP ACK"},
+        {"value": "-F", "label": "TCP FIN"}
+      ]
+    },
+    "port": {
+      "type": "string",
+      "label": "Destination Port (-p)",
+      "flag": "-p",
+      "placeholder": "80, 443, 22"
+    },
+    "count": {
+      "type": "string",
+      "label": "Packet count (-c)",
+      "flag": "-c",
+      "default": "4"
+    },
+    "interval": {
+      "type": "string",
+      "label": "Interval (-i)",
+      "flag": "-i",
+      "placeholder": "u1000 (1ms), 1 (1s)"
+    },
+    "ttl": {
+      "type": "string",
+      "label": "TTL (-t)",
+      "flag": "-t",
+      "default": "64"
+    },
+    "spoof_src": {
+      "type": "string",
+      "label": "Spoof source IP (-a)",
+      "flag": "-a",
+      "placeholder": "192.168.1.100"
+    }
+  },
+  "notes": [
+    "Always requires root/sudo",
+    "Useful for testing firewall rules — SYN vs ACK scan comparison reveals stateful filtering",
+    "--scan mode is cleaner than looping for port ranges",
+    "Lower level than nmap — use for specific packet crafting needs"
+  ],
+  "examples": [
+    {"desc": "ICMP ping test", "cmd": "sudo hping3 -1 -c 4 192.168.1.1"},
+    {"desc": "Check if port 80 open", "cmd": "sudo hping3 -S -p 80 -c 3 192.168.1.1"},
+    {"desc": "Scan ports 1-100", "cmd": "sudo hping3 -S --scan 1-100 192.168.1.1"}
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "name": "smbmap",
+  "binary": "smbmap",
+  "category": "enumeration",
+  "description": "SMB share enumerator. Lists shares, permissions (read/write), and can execute commands or search files. Faster than enum4linux for share-focused work.",
+  "requires_root": false,
+  "lan_scope": true,
+  "presets": [
+    {
+      "id": "null-session",
+      "name": "Null Session",
+      "icon": "🔓",
+      "description": "List shares with no credentials (anonymous).",
+      "command": "smbmap -H {target} --no-banner",
+      "requires_root": false,
+      "params": ["target"],
+      "expected_duration": "fast"
+    },
+    {
+      "id": "auth-shares",
+      "name": "Authenticated Shares",
+      "icon": "🔑",
+      "description": "List shares with credentials.",
+      "command": "smbmap -H {target} -u {username} -p {password} --no-banner",
+      "requires_root": false,
+      "params": ["target", "username", "password"],
+      "expected_duration": "fast"
+    },
+    {
+      "id": "recursive-list",
+      "name": "Recursive File List",
+      "icon": "📂",
+      "description": "Recursively list all files in shares.",
+      "command": "smbmap -H {target} -u {username} -p {password} -r {share} --no-banner",
+      "requires_root": false,
+      "params": ["target", "username", "password", "share"],
+      "param_defaults": {"share": "C$"},
+      "expected_duration": "medium"
+    },
+    {
+      "id": "subnet-sweep",
+      "name": "Subnet Sweep",
+      "icon": "🌐",
+      "description": "Check all hosts on subnet for open SMB.",
+      "command": "smbmap -H {target} --no-banner --no-color",
+      "requires_root": false,
+      "params": ["target"],
+      "expected_duration": "medium"
+    }
+  ],
+  "flags": {
+    "host": {
+      "type": "string",
+      "label": "Target Host (-H)",
+      "flag": "-H",
+      "required": true
+    },
+    "username": {
+      "type": "string",
+      "label": "Username (-u)",
+      "flag": "-u",
+      "placeholder": "guest, admin, domain\\user"
+    },
+    "password": {
+      "type": "string",
+      "label": "Password (-p)",
+      "flag": "-p",
+      "placeholder": "(empty = null session)"
+    },
+    "share": {
+      "type": "string",
+      "label": "Share (-s)",
+      "flag": "-s",
+      "placeholder": "C$, IPC$, ADMIN$, share_name"
+    },
+    "domain": {
+      "type": "string",
+      "label": "Domain (-d)",
+      "flag": "-d",
+      "placeholder": "WORKGROUP"
+    },
+    "port": {
+      "type": "string",
+      "label": "Port (-P)",
+      "flag": "-P",
+      "default": "445"
+    },
+    "recursive": {
+      "type": "boolean",
+      "label": "Recursive listing (-r)",
+      "flag": "-r"
+    },
+    "command": {
+      "type": "string",
+      "label": "Execute command (-x)",
+      "flag": "-x",
+      "placeholder": "whoami, ipconfig"
+    }
+  },
+  "notes": [
+    "Try null session first (no -u/-p) — misconfigured servers allow anonymous access",
+    "Common shares to check: C$, ADMIN$, IPC$, SYSVOL, NETLOGON",
+    "-x requires write access to an accessible share",
+    "Results feed directly into hydra for password attacks (found usernames)"
+  ],
+  "examples": [
+    {"desc": "Anonymous share list", "cmd": "smbmap -H 192.168.1.10"},
+    {"desc": "Auth share list", "cmd": "smbmap -H 192.168.1.10 -u admin -p password"},
+    {"desc": "List all files in share", "cmd": "smbmap -H 192.168.1.10 -u admin -p password -r C$"}
+  ]
+}

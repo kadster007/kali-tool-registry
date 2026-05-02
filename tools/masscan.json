@@ -1,0 +1,73 @@
+{
+  "name": "masscan",
+  "binary": "masscan",
+  "category": "network-discovery",
+  "description": "Extremely fast port scanner. Transmits 10M packets/sec. Use for rapid initial port discovery across large subnets. Not stealthy — use nmap for follow-up detail.",
+  "requires_root": true,
+  "lan_scope": true,
+  "presets": [
+    {
+      "id": "fast-web",
+      "name": "Fast Web Ports",
+      "icon": "⚡",
+      "description": "Find all HTTP/HTTPS across entire subnet in seconds.",
+      "command": "sudo masscan {target} -p80,443,8080,8443 --rate=1000",
+      "requires_root": true,
+      "params": ["target"],
+      "expected_duration": "fast"
+    },
+    {
+      "id": "top-ports",
+      "name": "Top 100 Ports",
+      "icon": "📊",
+      "description": "Rapid sweep of most common service ports.",
+      "command": "sudo masscan {target} -p21,22,23,25,53,80,110,111,135,139,143,443,445,993,995,1723,3306,3389,5900,8080 --rate=1000",
+      "requires_root": true,
+      "params": ["target"],
+      "expected_duration": "fast"
+    },
+    {
+      "id": "full-sweep",
+      "name": "Full Port Sweep",
+      "icon": "🔍",
+      "description": "All 65535 ports. Rate-limited to avoid overwhelming devices.",
+      "command": "sudo masscan {target} -p1-65535 --rate=500",
+      "requires_root": true,
+      "params": ["target"],
+      "expected_duration": "medium"
+    }
+  ],
+  "flags": {
+    "ports": {
+      "type": "string",
+      "label": "Ports",
+      "flag": "-p",
+      "placeholder": "80,443  or  1-65535",
+      "required": true
+    },
+    "rate": {
+      "type": "string",
+      "label": "Rate (packets/sec)",
+      "flag": "--rate",
+      "default": "1000",
+      "placeholder": "1000 (safe LAN) — max 10000000"
+    },
+    "interface": {
+      "type": "string",
+      "label": "Interface",
+      "flag": "-e",
+      "placeholder": "eth0, wlan0"
+    }
+  },
+  "notes": [
+    "Always requires root/sudo",
+    "Rate 1000 is safe for LAN. Rate > 10000 may crash routers.",
+    "Use for discovery only — follow up with nmap for service details",
+    "masscan does NOT do service/version detection"
+  ],
+  "examples": [
+    {"desc": "Find all SSH on LAN", "cmd": "sudo masscan 192.168.1.0/24 -p22 --rate=1000"},
+    {"desc": "Full subnet web sweep", "cmd": "sudo masscan 192.168.1.0/24 -p80,443 --rate=1000"},
+    {"desc": "All ports on one host", "cmd": "sudo masscan 192.168.1.1 -p1-65535 --rate=1000"}
+  ]
+}

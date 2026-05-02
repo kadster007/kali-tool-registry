@@ -1,0 +1,91 @@
+{
+  "name": "fping",
+  "binary": "fping",
+  "category": "network-discovery",
+  "description": "Fast parallel ICMP ping utility. Pings multiple hosts simultaneously. Best for generating a quick alive-host list from a subnet.",
+  "requires_root": false,
+  "lan_scope": true,
+  "presets": [
+    {
+      "id": "alive-hosts",
+      "name": "Find Alive Hosts",
+      "icon": "💚",
+      "description": "List all responding hosts in a subnet.",
+      "command": "fping -a -g {target} 2>/dev/null",
+      "requires_root": false,
+      "params": ["target"],
+      "param_defaults": {"target": "192.168.1.0/24"},
+      "expected_duration": "fast"
+    },
+    {
+      "id": "alive-verbose",
+      "name": "Alive + Dead",
+      "icon": "📊",
+      "description": "Show alive and unreachable hosts.",
+      "command": "fping -a -u -g {target}",
+      "requires_root": false,
+      "params": ["target"],
+      "param_defaults": {"target": "192.168.1.0/24"},
+      "expected_duration": "fast"
+    },
+    {
+      "id": "count-mode",
+      "name": "Count Mode",
+      "icon": "🔢",
+      "description": "Send N pings to each host, show stats.",
+      "command": "fping -c {count} -g {target}",
+      "requires_root": false,
+      "params": ["target", "count"],
+      "param_defaults": {"target": "192.168.1.0/24", "count": "3"},
+      "expected_duration": "fast"
+    }
+  ],
+  "flags": {
+    "alive": {
+      "type": "boolean",
+      "label": "Show alive only (-a)",
+      "flag": "-a",
+      "default": true
+    },
+    "generate": {
+      "type": "boolean",
+      "label": "Generate from CIDR (-g)",
+      "flag": "-g"
+    },
+    "count": {
+      "type": "string",
+      "label": "Ping count per host (-c)",
+      "flag": "-c",
+      "placeholder": "3"
+    },
+    "timeout": {
+      "type": "string",
+      "label": "Timeout ms (-t)",
+      "flag": "-t",
+      "default": "500",
+      "placeholder": "500"
+    },
+    "interval": {
+      "type": "string",
+      "label": "Interval ms (-p)",
+      "flag": "-p",
+      "placeholder": "1000"
+    },
+    "show_addr": {
+      "type": "boolean",
+      "label": "Show by address (-A)",
+      "flag": "-A"
+    }
+  },
+  "notes": [
+    "Does not require root on most Linux systems",
+    "Suppress unreachable errors with 2>/dev/null",
+    "-g with CIDR automatically generates the host range",
+    "Much faster than sequential ping for subnets"
+  ],
+  "examples": [
+    {"desc": "Find alive hosts", "cmd": "fping -a -g 192.168.1.0/24 2>/dev/null"},
+    {"desc": "Range scan", "cmd": "fping -a -g 192.168.1.1 192.168.1.254 2>/dev/null"},
+    {"desc": "3 pings each", "cmd": "fping -c 3 -g 192.168.1.0/24"}
+  ]
+}

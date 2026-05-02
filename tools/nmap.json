@@ -1,0 +1,193 @@
+{
+  "name": "nmap",
+  "binary": "nmap",
+  "version": "7.99",
+  "category": "network-discovery",
+  "description": "Network exploration and security auditing. The standard for port scanning, service detection, OS fingerprinting, and NSE scripting.",
+  "requires_root": false,
+  "privileged_flags": ["-sS", "-sU", "-O", "--osscan-guess", "-sA", "-sW", "-sM", "-sY", "-sZ"],
+  "output_parseable": true,
+  "lan_scope": true,
+  "presets": [
+    {
+      "id": "host-discovery",
+      "name": "Host Discovery",
+      "icon": "📡",
+      "description": "Find all live hosts on a subnet. No port scan.",
+      "command": "nmap -sn {target}",
+      "requires_root": false,
+      "params": ["target"],
+      "expected_duration": "fast"
+    },
+    {
+      "id": "quick-scan",
+      "name": "Quick Scan",
+      "icon": "⚡",
+      "description": "Top 1000 ports + service version detection.",
+      "command": "nmap -sV -T4 --open {target}",
+      "requires_root": false,
+      "params": ["target"],
+      "expected_duration": "medium"
+    },
+    {
+      "id": "stealth-syn",
+      "name": "Stealth SYN",
+      "icon": "🔕",
+      "description": "SYN scan — faster, less logged than TCP connect.",
+      "command": "sudo nmap -sS -T4 --open -p {ports} {target}",
+      "requires_root": true,
+      "params": ["target", "ports"],
+      "param_defaults": {"ports": "1-1000"},
+      "expected_duration": "medium"
+    },
+    {
+      "id": "full-tcp",
+      "name": "Full TCP",
+      "icon": "🔍",
+      "description": "All 65535 TCP ports + service + OS detection.",
+      "command": "sudo nmap -sS -sV -O -p- -T4 --open {target}",
+      "requires_root": true,
+      "params": ["target"],
+      "expected_duration": "slow"
+    },
+    {
+      "id": "udp-top",
+      "name": "UDP Top 100",
+      "icon": "📶",
+      "description": "Top 100 UDP ports. Finds DNS, SNMP, TFTP, etc.",
+      "command": "sudo nmap -sU --top-ports 100 {target}",
+      "requires_root": true,
+      "params": ["target"],
+      "expected_duration": "slow"
+    },
+    {
+      "id": "vuln-scripts",
+      "name": "Vulnerability Scan",
+      "icon": "🛡",
+      "description": "NSE vuln category scripts against target.",
+      "command": "nmap --script vuln -p {ports} -T4 {target}",
+      "requires_root": false,
+      "params": ["target", "ports"],
+      "param_defaults": {"ports": "1-1000"},
+      "expected_duration": "slow"
+    },
+    {
+      "id": "smb-enum",
+      "name": "SMB Enumeration",
+      "icon": "🗂",
+      "description": "SMB shares, users, OS fingerprint via NSE.",
+      "command": "nmap --script smb-enum-shares,smb-enum-users,smb-os-discovery,smb-security-mode -p 445,139 {target}",
+      "requires_root": false,
+      "params": ["target"],
+      "expected_duration": "medium"
+    },
+    {
+      "id": "http-enum",
+      "name": "HTTP Enumeration",
+      "icon": "🌐",
+      "description": "Enumerate web server directories and info.",
+      "command": "nmap --script http-enum,http-title,http-server-header,http-methods -p 80,443,8080,8443 {target}",
+      "requires_root": false,
+      "params": ["target"],
+      "expected_duration": "medium"
+    },
+    {
+      "id": "aggressive",
+      "name": "Aggressive",
+      "icon": "💥",
+      "description": "-A flag: OS, version, scripts, traceroute.",
+      "command": "nmap -A -T4 -p {ports} {target}",
+      "requires_root": false,
+      "params": ["target", "ports"],
+      "param_defaults": {"ports": "1-1000"},
+      "expected_duration": "slow"
+    }
+  ],
+  "flags": {
+    "scan_type": {
+      "type": "select",
+      "label": "Scan Type",
+      "options": [
+        {"value": "-sT", "label": "TCP Connect (no root)"},
+        {"value": "-sS", "label": "SYN Stealth ★ (root)", "requires_root": true},
+        {"value": "-sU", "label": "UDP (root)", "requires_root": true},
+        {"value": "-sA", "label": "ACK (firewall map, root)", "requires_root": true},
+        {"value": "-sn", "label": "Ping only — no port scan"},
+        {"value": "-sV", "label": "Version detection"}
+      ]
+    },
+    "timing": {
+      "type": "select",
+      "label": "Timing Template",
+      "default": "-T4",
+      "options": [
+        {"value": "-T1", "label": "T1 — Sneaky (IDS evasion)"},
+        {"value": "-T2", "label": "T2 — Polite"},
+        {"value": "-T3", "label": "T3 — Normal"},
+        {"value": "-T4", "label": "T4 — Aggressive ★"},
+        {"value": "-T5", "label": "T5 — Insane (may miss ports)"}
+      ]
+    },
+    "ports": {
+      "type": "string",
+      "label": "Ports",
+      "flag": "-p",
+      "placeholder": "22,80,443  or  1-1000  or  -  (all)",
+      "examples": ["22,80,443", "1-65535", "U:53,T:80", "-"]
+    },
+    "top_ports": {
+      "type": "string",
+      "label": "Top N Ports",
+      "flag": "--top-ports",
+      "placeholder": "100, 1000, 5000"
+    },
+    "os_detect": {
+      "type": "boolean",
+      "label": "OS Detection (-O)",
+      "flag": "-O",
+      "requires_root": true
+    },
+    "version": {
+      "type": "boolean",
+      "label": "Version Detection (-sV)",
+      "flag": "-sV"
+    },
+    "scripts": {
+      "type": "string",
+      "label": "NSE Scripts (--script)",
+      "flag": "--script",
+      "placeholder": "default, vuln, safe, smb-enum-shares",
+      "examples": ["default", "vuln", "auth", "discovery", "smb-enum-shares,smb-enum-users", "http-enum"]
+    },
+    "open_only": {
+      "type": "boolean",
+      "label": "Show open ports only (--open)",
+      "flag": "--open",
+      "default": true
+    },
+    "no_dns": {
+      "type": "boolean",
+      "label": "Skip DNS resolution (-n)",
+      "flag": "-n",
+      "default": false
+    },
+    "verbose": {
+      "type": "boolean",
+      "label": "Verbose (-v)",
+      "flag": "-v"
+    }
+  },
+  "notes": [
+    "sudo required for SYN scan (-sS) — provides better results and is less likely to be logged",
+    "Use -T4 for LAN scanning — safe and fast on local networks",
+    "NSE scripts in the 'vuln' category may trigger IDS alerts",
+    "-p- scans all 65535 ports but takes significantly longer"
+  ],
+  "examples": [
+    {"desc": "Discover hosts on subnet", "cmd": "nmap -sn 192.168.1.0/24"},
+    {"desc": "Quick scan single host", "cmd": "nmap -sV -T4 192.168.1.1"},
+    {"desc": "Full scan with OS", "cmd": "sudo nmap -sS -sV -O -p- 192.168.1.1"},
+    {"desc": "SMB enum", "cmd": "nmap --script smb-enum-shares -p 445 192.168.1.0/24"},
+    {"desc": "Top 1000 UDP", "cmd": "sudo nmap -sU --top-ports 1000 192.168.1.1"}
+  ]
+}

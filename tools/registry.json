@@ -1,0 +1,207 @@
+{
+  "version": "1.0",
+  "description": "FieldOps Tool Registry — Phase 1 LAN Tools",
+  "categories": {
+    "network-discovery": {
+      "label": "Network Discovery",
+      "icon": "📡",
+      "description": "Find live hosts and open ports on the network",
+      "color": "#00cc88"
+    },
+    "enumeration": {
+      "label": "Enumeration",
+      "icon": "🗂",
+      "description": "Extract service details, users, shares from discovered hosts",
+      "color": "#44aaff"
+    },
+    "credential-testing": {
+      "label": "Credential Testing",
+      "icon": "🔑",
+      "description": "Test authentication on discovered services — authorized targets only",
+      "color": "#ffaa00"
+    },
+    "network-testing": {
+      "label": "Network Testing",
+      "icon": "⚡",
+      "description": "Packet crafting and low-level network probing",
+      "color": "#cc88ff"
+    }
+  },
+  "tools": [
+    {"name": "nmap",        "file": "nmap.json",        "category": "network-discovery", "phase": 1},
+    {"name": "masscan",     "file": "masscan.json",     "category": "network-discovery", "phase": 1},
+    {"name": "arp-scan",    "file": "arp-scan.json",    "category": "network-discovery", "phase": 1},
+    {"name": "netdiscover", "file": "netdiscover.json", "category": "network-discovery", "phase": 1},
+    {"name": "fping",       "file": "fping.json",       "category": "network-discovery", "phase": 1},
+    {"name": "nbtscan",     "file": "nbtscan.json",     "category": "enumeration",       "phase": 1},
+    {"name": "enum4linux",  "file": "enum4linux.json",  "category": "enumeration",       "phase": 1},
+    {"name": "smbmap",      "file": "smbmap.json",      "category": "enumeration",       "phase": 1},
+    {"name": "hydra",       "file": "hydra.json",       "category": "credential-testing","phase": 1},
+    {"name": "hping3",      "file": "hping3.json",      "category": "network-testing",   "phase": 1}
+  ],
+  "playbooks": [
+    {
+      "id": "full-lan-discovery",
+      "name": "Full LAN Discovery",
+      "icon": "🗺",
+      "description": "Complete automated workflow: find all hosts, identify services, fingerprint OS, save target profile. Starting point for every engagement.",
+      "phases": [
+        {
+          "id": "arp-sweep",
+          "name": "ARP Sweep",
+          "description": "Find all layer-2 reachable hosts. More reliable than ping — works even when ICMP is blocked.",
+          "tool": "arp-scan",
+          "command": "sudo arp-scan --localnet",
+          "output_role": "host_discovery",
+          "save_to_profile": true,
+          "extracts": ["ip", "mac", "vendor"]
+        },
+        {
+          "id": "port-discovery",
+          "name": "Port Discovery",
+          "description": "Fast masscan sweep of top ports across all discovered hosts. Gets an initial port map in seconds.",
+          "tool": "masscan",
+          "command": "sudo masscan {discovered_hosts} -p21,22,23,25,53,80,110,135,139,143,443,445,993,995,3306,3389,5900,8080,8443 --rate=1000",
+          "depends_on": "arp-sweep",
+          "uses_profile_field": "hosts",
+          "output_role": "open_ports",
+          "save_to_profile": true
+        },
+        {
+          "id": "service-scan",
+          "name": "Service & OS Detection",
+          "description": "Nmap targeted scan on hosts with open ports. Identifies service versions and OS. This feeds all subsequent tools.",
+          "tool": "nmap",
+          "command": "sudo nmap -sS -sV -O -T4 --open -p {open_ports} {host}",
+          "depends_on": "port-discovery",
+          "uses_profile_field": "open_ports",
+          "output_role": "services",
+          "output_format": "xml",
+          "output_file": "/opt/fieldops/engagements/{engagement_id}/nmap_{host}.xml",
+          "save_to_profile": true,
+          "extracts": ["hostname", "os", "service", "version", "cpe"]
+        },
+        {
+          "id": "smb-check",
+          "name": "SMB Enumeration",
+          "description": "If port 445 is open on any host, run smbmap and enum4linux automatically.",
+          "condition": "port:445 in open_ports",
+          "tool": "smbmap",
+          "command": "smbmap -H {host} --no-banner",
+          "depends_on": "service-scan",
+          "output_role": "smb_shares",
+          "save_to_profile": true
+        },
+        {
+          "id": "netbios-check",
+          "name": "NetBIOS Scan",
+          "description": "Grab NetBIOS names and workgroup for any responsive host.",
+          "tool": "nbtscan",
+          "command": "nbtscan -v {discovered_hosts_cidr}",
+          "depends_on": "arp-sweep",
+          "output_role": "netbios",
+          "save_to_profile": true,
+          "extracts": ["hostname", "workgroup", "mac"]
+        }
+      ],
+      "output": {
+        "format": "json",
+        "description": "Target Profile — all discovered data in one file, ready for Phase 2 tools",
+        "schema": {
+          "engagement_id": "string",
+          "subnet": "string",
+          "scan_date": "datetime",
+          "hosts": [
+            {
+              "ip": "string",
+              "mac": "string",
+              "vendor": "string",
+              "hostname": "string",
+              "os": "string",
+              "os_confidence": "int",
+              "netbios_name": "string",
+              "workgroup": "string",
+              "open_ports": [
+                {
+                  "port": "int",
+                  "protocol": "tcp|udp",
+                  "state": "open|filtered",
+                  "service": "string",
+                  "version": "string",
+                  "cpe": "string"
+                }
+              ],
+              "smb_shares": [
+                {
+                  "name": "string",
+                  "permissions": "string",
+                  "comment": "string"
+                }
+              ],
+              "notes": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "quick-host-map",
+      "name": "Quick Host Map",
+      "icon": "⚡",
+      "description": "Just find who's on the network — ARP sweep only, results in under 10 seconds.",
+      "phases": [
+        {
+          "id": "arp-sweep",
+          "name": "ARP Sweep",
+          "tool": "arp-scan",
+          "command": "sudo arp-scan --localnet",
+          "output_role": "host_discovery",
+          "save_to_profile": true,
+          "extracts": ["ip", "mac", "vendor"]
+        }
+      ]
+    },
+    {
+      "id": "smb-audit",
+      "name": "SMB Audit",
+      "icon": "🗂",
+      "description": "Focused SMB audit: find SMB hosts, enumerate shares, attempt null sessions, extract users.",
+      "phases": [
+        {
+          "id": "smb-discovery",
+          "name": "Find SMB Hosts",
+          "tool": "nmap",
+          "command": "nmap -p 445,139 --open -T4 {target}",
+          "params": ["target"],
+          "output_role": "smb_hosts"
+        },
+        {
+          "id": "share-enum",
+          "name": "Enumerate Shares",
+          "tool": "smbmap",
+          "command": "smbmap -H {host} --no-banner",
+          "depends_on": "smb-discovery"
+        },
+        {
+          "id": "full-enum",
+          "name": "Full Enumeration",
+          "tool": "enum4linux",
+          "command": "enum4linux -a {host}",
+          "depends_on": "smb-discovery"
+        }
+      ]
+    }
+  ],
+  "wordlists": {
+    "users": [
+      {"path": "/usr/share/wordlists/metasploit/unix_users.txt", "description": "Common Unix usernames"},
+      {"path": "/usr/share/seclists/Usernames/top-usernames-shortlist.txt", "description": "Top 20 common usernames"},
+      {"path": "/usr/share/seclists/Usernames/Names/names.txt", "description": "Common first names"}
+    ],
+    "passwords": [
+      {"path": "/usr/share/wordlists/rockyou.txt", "description": "RockYou — 14M passwords (must unzip)"},
+      {"path": "/usr/share/wordlists/fasttrack.txt", "description": "Fast-track — common/simple passwords"},
+      {"path": "/usr/share/seclists/Passwords/Common-Credentials/top-20-common-SSH-passwords.txt", "description": "Top 20 SSH passwords"}
+    ]
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "name": "arp-scan",
+  "binary": "arp-scan",
+  "category": "network-discovery",
+  "description": "ARP scanner that identifies all layer-2 reachable hosts. Faster and more reliable than ping for LAN host discovery. Shows IP, MAC, and hardware vendor.",
+  "requires_root": true,
+  "lan_scope": true,
+  "presets": [
+    {
+      "id": "localnet",
+      "name": "Scan Local Network",
+      "icon": "🏠",
+      "description": "Auto-detect and scan local subnet.",
+      "command": "sudo arp-scan --localnet",
+      "requires_root": true,
+      "params": [],
+      "expected_duration": "fast"
+    },
+    {
+      "id": "subnet",
+      "name": "Scan Subnet",
+      "icon": "📡",
+      "description": "Scan a specific CIDR range.",
+      "command": "sudo arp-scan {target}",
+      "requires_root": true,
+      "params": ["target"],
+      "param_defaults": {"target": "192.168.1.0/24"},
+      "expected_duration": "fast"
+    },
+    {
+      "id": "duplicate-detect",
+      "name": "Detect Duplicates",
+      "icon": "⚠️",
+      "description": "Find duplicate IP addresses (ARP spoofing detection).",
+      "command": "sudo arp-scan --localnet --ignoredups=no",
+      "requires_root": true,
+      "params": [],
+      "expected_duration": "fast"
+    }
+  ],
+  "flags": {
+    "localnet": {
+      "type": "boolean",
+      "label": "Local network (--localnet)",
+      "flag": "--localnet"
+    },
+    "interface": {
+      "type": "string",
+      "label": "Interface",
+      "flag": "--interface",
+      "placeholder": "eth0, wlan0"
+    },
+    "retry": {
+      "type": "string",
+      "label": "Retries",
+      "flag": "--retry",
+      "placeholder": "3",
+      "default": "3"
+    },
+    "bandwidth": {
+      "type": "string",
+      "label": "Bandwidth limit",
+      "flag": "--bandwidth",
+      "placeholder": "256000 (bits/sec)"
+    },
+    "verbose": {
+      "type": "boolean",
+      "label": "Verbose",
+      "flag": "--verbose"
+    }
+  },
+  "notes": [
+    "Most reliable LAN host discovery — works even when ICMP is blocked",
+    "--localnet auto-detects your subnet from the routing table",
+    "Shows vendor from OUI database — useful for device identification",
+    "Multiple responses from same IP = possible ARP spoofing"
+  ],
+  "examples": [
+    {"desc": "Scan local network", "cmd": "sudo arp-scan --localnet"},
+    {"desc": "Scan specific subnet", "cmd": "sudo arp-scan 192.168.1.0/24"},
+    {"desc": "Verbose output", "cmd": "sudo arp-scan --localnet --verbose"}
+  ]
+}
