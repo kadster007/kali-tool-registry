@@ -61,12 +61,17 @@ pkill -f "autossh.*-R[ =]?$SOCKS_PORT:.*${KADX_USER}@" 2>/dev/null || true
 echo "==> opening autossh tunnel + interactive kadx shell via $PICKED"
 echo "   autossh will auto-reconnect if the network blips."
 echo "   Ctrl-D or 'exit' to leave the shell. To kill the tunnel:  pkill autossh"
-# AUTOSSH_PORT=0 disables the monitor port; we use SSH keepalives instead
-exec env AUTOSSH_PORT=0 AUTOSSH_LOGFILE="$AUTOSSH_LOG" \
+# AUTOSSH_PORT=0 disables the monitor port; we use SSH keepalives instead.
+# AUTOSSH_GATETIME=0 allows rapid retries after disconnect (default 30s gate
+# would make autossh give up if ssh died before 30s — bad during reconnects).
+# ExitOnForwardFailure=no: if the remote port is briefly still bound by the
+# previous (dying) session, keep trying instead of bailing out.
+exec env AUTOSSH_PORT=0 AUTOSSH_GATETIME=0 AUTOSSH_LOGFILE="$AUTOSSH_LOG" \
     autossh -M 0 \
         -p "$KADX_PORT" -i "$KADX_KEY" \
-        -o ServerAliveInterval=20 -o ServerAliveCountMax=3 \
+        -o ServerAliveInterval=10 -o ServerAliveCountMax=2 \
         -o StrictHostKeyChecking=accept-new \
-        -o ExitOnForwardFailure=yes \
+        -o ExitOnForwardFailure=no \
+        -o TCPKeepAlive=yes \
         -R "$SOCKS_PORT:127.0.0.1:$SOCKS_PORT" \
         "$KADX_USER@$PICKED"

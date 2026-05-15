@@ -96,12 +96,13 @@ start_pivot() {
     # start autossh in background (no -t, just the reverse tunnel)
     pkill -f "autossh.*-R[ =]?${SOCKS_PORT}:.*${KADX_USER}@" 2>/dev/null || true
     sleep 0.3
-    AUTOSSH_PORT=0 AUTOSSH_LOGFILE="$HOME/.autossh.log" \
+    AUTOSSH_PORT=0 AUTOSSH_GATETIME=0 AUTOSSH_LOGFILE="$HOME/.autossh.log" \
         nohup autossh -M 0 -fN \
             -p "$KADX_PORT" -i "$KADX_KEY" \
-            -o ServerAliveInterval=20 -o ServerAliveCountMax=3 \
+            -o ServerAliveInterval=10 -o ServerAliveCountMax=2 \
             -o StrictHostKeyChecking=accept-new \
-            -o ExitOnForwardFailure=yes \
+            -o ExitOnForwardFailure=no \
+            -o TCPKeepAlive=yes \
             -R "$SOCKS_PORT:127.0.0.1:$SOCKS_PORT" \
             "$KADX_USER@$PICKED" > /dev/null 2>&1 &
     disown
