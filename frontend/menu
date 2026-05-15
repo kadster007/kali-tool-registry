@@ -1,40 +1,138 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# menu — gum-based TUI for the portable-pivot frontend on Fold 6.
-# Single entry point you can launch by hand or from Termux:Widget.
+# menu — gum-based TUI for ShadowOps frontend (Fold 6 / Termux).
+# Tunnel runs in background; shell is a separate action so the tunnel
+# persists across menu actions.
 
 set -u
 FRONTEND_DIR="$(cd "$(dirname "$0")" && pwd)"
-SOCKS_PORT="9050"
+
+# kadx targets, in fallback order
+KADX_TARGETS=(
+    "100.105.140.70"     # Tailscale
+    "kadx"               # MagicDNS
+    "192.168.1.165"      # LAN at home
+)
 KADX_PORT="2222"
 KADX_USER="kadx"
 KADX_KEY="$HOME/.ssh/id_ed25519"
+SOCKS_PORT="9050"
 
-# Ensure gum is available
 if ! command -v gum >/dev/null 2>&1; then
     echo "gum not installed. Run: pkg install gum"
     exit 1
 fi
 
-# Find the active pivot host (if pivot-up.sh is running)
+# --- helpers ------------------------------------------------------------
+
 active_pivot_host() {
     pgrep -af "autossh.*-R[ =]?${SOCKS_PORT}:.*${KADX_USER}@" 2>/dev/null \
         | sed -n "s/.* ${KADX_USER}@\([^ ]*\).*/\1/p" | head -1
 }
 
+microsocks_running() {
+    pgrep -fx "microsocks -i 127.0.0.1 -p $SOCKS_PORT" >/dev/null
+}
+
 show_status() {
     HOST=$(active_pivot_host)
     if [ -n "$HOST" ]; then
-        gum style --foreground 42 "● Pivot UP — tunnel via ${HOST}"
-        gum style --foreground 240 "  Phone microsocks: $(pgrep -fx "microsocks -i 127.0.0.1 -p $SOCKS_PORT" >/dev/null && echo running || echo NOT running)"
+        gum style --foreground 42 "● Pivot UP — autossh via ${HOST}"
     else
-        gum style --foreground 196 "● Pivot DOWN — start with 'Start pivot' below"
+        gum style --foreground 196 "● Pivot DOWN"
+    fi
+    if microsocks_running; then
+        gum style --foreground 240 "  microsocks: running on 127.0.0.1:${SOCKS_PORT}"
+    else
+        gum style --foreground 240 "  microsocks: NOT running"
     fi
 }
 
-run_remote() {
+pick_target() {
+    for t in "${KADX_TARGETS[@]}"; do
+        if timeout 4 bash -c "exec 3<>/dev/tcp/$t/$KADX_PORT" 2>/dev/null; then
+            echo "$t"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# --- actions ------------------------------------------------------------
+
+start_pivot() {
+    if [ -n "$(active_pivot_host)" ]; then
+        gum style --foreground 220 "Pivot already up."
+        gum input --placeholder "Press Enter to return" > /dev/null
+        return
+    fi
+
+    termux-wake-lock 2>/dev/null || true
+
+    # microsocks
+    if ! microsocks_running; then
+        gum style --foreground 240 "Starting microsocks..."
+        nohup microsocks -i 127.0.0.1 -p "$SOCKS_PORT" > "$HOME/microsocks.log" 2>&1 &
+        disown
+        sleep 1
+        if ! microsocks_running; then
+            gum style --foreground 196 "Failed to start microsocks. See ~/microsocks.log"
+            gum input --placeholder "Press Enter to return" > /dev/null
+            return
+        fi
+    fi
+
+    # find a reachable kadx
+    gum style --foreground 240 "Finding a reachable kadx target..."
+    PICKED=$(pick_target)
+    if [ -z "$PICKED" ]; then
+        gum style --foreground 196 "No kadx target reachable."
+        gum style --foreground 240 "  Tried: ${KADX_TARGETS[*]}"
+        gum style --foreground 240 "  Check Tailscale (toggle off/on; exit-node OFF)."
+        gum input --placeholder "Press Enter to return" > /dev/null
+        return
+    fi
+    gum style --foreground 42 "  reachable via ${PICKED}"
+
+    # start autossh in background (no -t, just the reverse tunnel)
+    pkill -f "autossh.*-R[ =]?${SOCKS_PORT}:.*${KADX_USER}@" 2>/dev/null || true
+    sleep 0.3
+    AUTOSSH_PORT=0 AUTOSSH_LOGFILE="$HOME/.autossh.log" \
+        nohup autossh -M 0 -fN \
+            -p "$KADX_PORT" -i "$KADX_KEY" \
+            -o ServerAliveInterval=20 -o ServerAliveCountMax=3 \
+            -o StrictHostKeyChecking=accept-new \
+            -o ExitOnForwardFailure=yes \
+            -R "$SOCKS_PORT:127.0.0.1:$SOCKS_PORT" \
+            "$KADX_USER@$PICKED" > /dev/null 2>&1 &
+    disown
+    sleep 2
+
+    if [ -n "$(active_pivot_host)" ]; then
+        gum style --foreground 42 "● Pivot UP via $PICKED (tunnel runs in background)"
+    else
+        gum style --foreground 196 "autossh failed to establish. Check ~/.autossh.log"
+    fi
+    gum input --placeholder "Press Enter to return" > /dev/null
+}
+
+open_shell() {
     HOST=$(active_pivot_host)
     if [ -z "$HOST" ]; then
-        gum style --foreground 196 "No active pivot. Choose 'Start pivot' first."
+        gum style --foreground 196 "No active pivot. 'Start pivot' first."
+        gum input --placeholder "Press Enter to return" > /dev/null
+        return
+    fi
+    gum style --foreground 240 "Connecting to kadx via ${HOST} — type 'exit' to come back to menu."
+    sleep 0.5
+    # NOTE: no `exec` here — when ssh exits, we return to the menu loop.
+    ssh -p "$KADX_PORT" -i "$KADX_KEY" -o StrictHostKeyChecking=accept-new \
+        "${KADX_USER}@${HOST}" || true
+}
+
+run_remote_quiet() {
+    HOST=$(active_pivot_host)
+    if [ -z "$HOST" ]; then
+        gum style --foreground 196 "No active pivot. 'Start pivot' first."
         gum input --placeholder "Press Enter to return" > /dev/null
         return
     fi
@@ -45,51 +143,52 @@ run_remote() {
 }
 
 scan_current_lan() {
+    if [ -z "$(active_pivot_host)" ]; then
+        gum style --foreground 196 "No active pivot. 'Start pivot' first."
+        gum input --placeholder "Press Enter to return" > /dev/null
+        return
+    fi
     bash "$FRONTEND_DIR/scan-here"
     gum input --placeholder "Press Enter to return" > /dev/null
 }
 
 scan_specific_host() {
-    HOST_TGT=$(gum input --placeholder "Host or CIDR to scan (e.g. 192.168.1.42)")
-    [ -z "$HOST_TGT" ] && return
-    PORTS=$(gum input --value "22,80,443,445,3389,8080,8443" --placeholder "Ports")
-    run_remote "pivot nmap -T4 -p ${PORTS} ${HOST_TGT}"
-}
-
-view_recent_logs() {
-    run_remote "ls -lat ~/pivot-logs/$(date +%Y-%m-%d)/ 2>/dev/null | head -15; echo; echo 'Latest:'; tail -20 ~/pivot-logs/latest.log 2>/dev/null"
-}
-
-start_pivot() {
-    if [ -n "$(active_pivot_host)" ]; then
-        gum style --foreground 220 "Pivot already up."
+    if [ -z "$(active_pivot_host)" ]; then
+        gum style --foreground 196 "No active pivot. 'Start pivot' first."
         gum input --placeholder "Press Enter to return" > /dev/null
         return
     fi
-    gum style --foreground 42 "Starting pivot — this will replace this menu with a kadx shell."
-    gum style --foreground 240 "Exit the shell or close Termux to return."
-    sleep 1
-    exec bash "$FRONTEND_DIR/pivot-up.sh"
+    HOST_TGT=$(gum input --placeholder "Host or CIDR (e.g. 192.168.1.42 or 192.168.1.0/24)")
+    [ -z "$HOST_TGT" ] && return
+    PORTS=$(gum input --value "22,80,443,445,3389,8080,8443" --placeholder "Ports")
+    run_remote_quiet "pivot nmap -T4 -p ${PORTS} ${HOST_TGT}"
+}
+
+view_recent_logs() {
+    run_remote_quiet "ls -lat ~/pivot-logs/$(date +%Y-%m-%d)/ 2>/dev/null | head -15; echo; echo 'Latest:'; tail -25 ~/pivot-logs/latest.log 2>/dev/null"
 }
 
 stop_pivot() {
     if gum confirm "Stop pivot? (kills autossh + microsocks)"; then
-        pkill -f autossh 2>/dev/null
+        pkill -f "autossh.*-R[ =]?${SOCKS_PORT}:.*${KADX_USER}@" 2>/dev/null
         pkill -x microsocks 2>/dev/null
-        gum style --foreground 196 "Pivot torn down."
+        sleep 0.5
+        gum style --foreground 196 "● Pivot torn down."
         sleep 1
     fi
 }
 
-# Main loop
+# --- main loop ----------------------------------------------------------
+
 while true; do
     clear
     gum style --border normal --padding "1 2" --margin "1" --border-foreground 212 \
-        "Kali Portable Pivot — Fold 6 frontend"
+        "ShadowOps — Fold 6 frontend"
     show_status
     echo ""
     CHOICE=$(gum choose \
-        "Start pivot (open kadx shell)" \
+        "Start pivot" \
+        "Open kadx shell" \
         "Scan current Wi-Fi network" \
         "Scan specific host/CIDR" \
         "View recent logs" \
@@ -97,12 +196,13 @@ while true; do
         "Stop pivot" \
         "Quit")
     case "$CHOICE" in
-        "Start pivot (open kadx shell)") start_pivot ;;
-        "Scan current Wi-Fi network")    scan_current_lan ;;
-        "Scan specific host/CIDR")       scan_specific_host ;;
-        "View recent logs")              view_recent_logs ;;
-        "Pivot status (detail)")         run_remote "bash ~/pivot-status.sh" ;;
-        "Stop pivot")                    stop_pivot ;;
-        "Quit"|"")                       clear; exit 0 ;;
+        "Start pivot")                  start_pivot ;;
+        "Open kadx shell")              open_shell ;;
+        "Scan current Wi-Fi network")   scan_current_lan ;;
+        "Scan specific host/CIDR")      scan_specific_host ;;
+        "View recent logs")             view_recent_logs ;;
+        "Pivot status (detail)")        run_remote_quiet "bash ~/pivot-status.sh" ;;
+        "Stop pivot")                   stop_pivot ;;
+        "Quit"|"")                      clear; exit 0 ;;
     esac
 done
