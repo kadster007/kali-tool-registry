@@ -34,14 +34,9 @@ fi
 NET_PREFIX="${PHONE_IP%.*}"
 NETWORK="${NET_PREFIX}.0/24"
 
-# --- find the active pivot session ---------------------------------------
-TUNNEL_HOST=$(pgrep -af "autossh.*-R[ =]?${SOCKS_PORT}:.*kadx@" 2>/dev/null \
-    | sed -n 's/.* kadx@\([^ ]*\).*/\1/p' | head -1)
-if [ -z "$TUNNEL_HOST" ]; then
-    TUNNEL_HOST=$(pgrep -af "ssh.*-R[ =]?${SOCKS_PORT}:.*kadx@" 2>/dev/null \
-        | sed -n 's/.* kadx@\([^ ]*\).*/\1/p' | head -1)
-fi
-if [ -z "$TUNNEL_HOST" ]; then
+# --- confirm tunnel is up ------------------------------------------------
+if ! pgrep -af "autossh.*-R[ =]?${SOCKS_PORT}:.*kadx@" >/dev/null 2>&1 \
+   && ! pgrep -af "ssh.*-R[ =]?${SOCKS_PORT}:.*kadx@" >/dev/null 2>&1; then
     cat <<EOF
 ERROR: no active pivot tunnel detected.
   Start the pivot first:
@@ -51,9 +46,28 @@ EOF
     exit 2
 fi
 
+# --- pick our OWN SSH target (don't trust autossh's choice — may not be ---
+# --- reachable from the same network state right now) --------------------
 KADX_PORT="2222"
 KADX_USER="kadx"
 KADX_KEY="$HOME/.ssh/id_ed25519"
+KADX_TARGETS=("100.105.140.70" "192.168.1.165")
+
+TUNNEL_HOST=""
+for t in "${KADX_TARGETS[@]}"; do
+    if timeout 4 bash -c "exec 3<>/dev/tcp/$t/$KADX_PORT" 2>/dev/null; then
+        TUNNEL_HOST="$t"
+        break
+    fi
+done
+if [ -z "$TUNNEL_HOST" ]; then
+    cat <<EOF
+ERROR: pivot tunnel is up, but no kadx target is reachable from here for the SSH session.
+  Tried: ${KADX_TARGETS[*]}
+  Phone may be on a network where neither Tailscale routes nor home LAN work.
+EOF
+    exit 3
+fi
 TS=$(date +%Y%m%d-%H%M%S)
 LOG_REL="pivot-logs/$(date +%Y-%m-%d)/${TS}-scan-${NETWORK//\//_}.log"
 
