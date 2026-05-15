@@ -71,7 +71,7 @@ EOF
 ssh -p "$KADX_PORT" -i "$KADX_KEY" -o StrictHostKeyChecking=accept-new \
     "$KADX_USER@$TUNNEL_HOST" \
     "mkdir -p ~/pivot-logs/$(date +%Y-%m-%d) && \
-     pivot nmap -T4 -p 22,80,443,445,3389,8080,8443 ${NETWORK} 2>&1 \
+     \$HOME/.local/bin/pivot nmap -T4 -p 22,80,443,445,3389,8080,8443 ${NETWORK} 2>&1 \
        | tee ~/${LOG_REL} && \
      ln -sf ~/${LOG_REL} ~/pivot-logs/latest.log && \
      echo && echo '[scan-here] log saved: ~/${LOG_REL}'"

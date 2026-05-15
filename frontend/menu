@@ -161,7 +161,7 @@ scan_specific_host() {
     HOST_TGT=$(gum input --placeholder "Host or CIDR (e.g. 192.168.1.42 or 192.168.1.0/24)")
     [ -z "$HOST_TGT" ] && return
     PORTS=$(gum input --value "22,80,443,445,3389,8080,8443" --placeholder "Ports")
-    run_remote_quiet "pivot nmap -T4 -p ${PORTS} ${HOST_TGT}"
+    run_remote_quiet "\$HOME/.local/bin/pivot nmap -T4 -p ${PORTS} ${HOST_TGT}"
 }
 
 view_recent_logs() {
