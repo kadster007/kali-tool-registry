@@ -59,8 +59,13 @@ AllowAgentForwarding yes
 # Misc
 LoginGraceTime 30
 MaxAuthTries 3
-ClientAliveInterval 60
-ClientAliveCountMax 3
+
+# Detect-and-evict dead clients quickly so port 9050 (used by ssh -R from
+# the phone) is released within ~30s when the phone changes networks.
+ClientAliveInterval 15
+ClientAliveCountMax 2
+TCPKeepAlive yes
+
 Subsystem sftp /usr/lib/openssh/sftp-server
 EOF
 
