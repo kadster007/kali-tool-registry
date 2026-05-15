@@ -1,0 +1,4 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# Termux:Widget shortcut — one-tap pivot up.
+# Place this file (or a copy) in ~/.shortcuts/ for the widget to find it.
+exec bash "$HOME/portable-pivot/frontend/pivot-up.sh"

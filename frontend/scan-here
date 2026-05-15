@@ -1,0 +1,61 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# scan-here — auto-detect phone's current LAN, run nmap via pivot, log to kadx.
+# Designed to be invoked from Termux:Widget or the gum menu.
+
+set -u
+SOCKS_PORT="9050"
+
+# --- detect phone's current Wi-Fi subnet ----------------------------------
+# Termux ip(8) works; pick the wlan0 inet line.
+SUBNET=$(ip -4 addr show wlan0 2>/dev/null \
+    | awk '/inet /{print $2}' | head -1)
+if [ -z "$SUBNET" ]; then
+    echo "ERROR: couldn't detect a wlan0 IPv4 — is the phone on Wi-Fi?"
+    exit 1
+fi
+PHONE_IP="${SUBNET%/*}"
+# Build a /24 from the phone IP (most home/cafe LANs are /24)
+NET_PREFIX="${PHONE_IP%.*}"
+NETWORK="${NET_PREFIX}.0/24"
+
+# --- find an active SSH/pivot session (we expect pivot-up.sh ran first) ---
+# We *don't* re-open the tunnel here — pivot-up.sh owns that, and the scan
+# uses the existing tunnel via the SSH command channel.
+TUNNEL_HOST=$(pgrep -af "autossh.*-R[ =]?${SOCKS_PORT}:.*kadx@" \
+    | sed -n 's/.* kadx@\([^ ]*\).*/\1/p' | head -1)
+if [ -z "$TUNNEL_HOST" ]; then
+    TUNNEL_HOST=$(pgrep -af "ssh.*-R[ =]?${SOCKS_PORT}:.*kadx@" \
+        | sed -n 's/.* kadx@\([^ ]*\).*/\1/p' | head -1)
+fi
+if [ -z "$TUNNEL_HOST" ]; then
+    echo "ERROR: no active pivot tunnel detected."
+    echo "       Run ~/portable-pivot/frontend/pivot-up.sh first."
+    exit 2
+fi
+
+KADX_PORT="2222"
+KADX_USER="kadx"
+KADX_KEY="$HOME/.ssh/id_ed25519"
+TS=$(date +%Y%m%d-%H%M%S)
+LOG_PATH="pivot-logs/$(date +%Y-%m-%d)/${TS}-scan-${NETWORK//\//_}.log"
+
+cat <<EOF
+==> scan-here
+    phone IP     : $PHONE_IP
+    target net   : $NETWORK
+    pivot host   : $TUNNEL_HOST
+    log on kadx  : ~/$LOG_PATH
+
+    Streaming nmap output (TCP connect scan via SOCKS5 pivot):
+
+EOF
+
+# Run on kadx: tee output to both phone screen and a log file on kadx.
+# Quoting: outer single-quotes preserved through remote shell.
+ssh -p "$KADX_PORT" -i "$KADX_KEY" -o StrictHostKeyChecking=accept-new \
+    "$KADX_USER@$TUNNEL_HOST" \
+    "mkdir -p ~/pivot-logs/$(date +%Y-%m-%d) && \
+     pivot nmap -T4 -p 22,80,443,445,3389,8080,8443 ${NETWORK} \
+        2>&1 | tee ~/${LOG_PATH} && \
+     ln -sf ~/${LOG_PATH} ~/pivot-logs/latest.log && \
+     echo && echo '[scan-here] log saved: ~/${LOG_PATH}'"

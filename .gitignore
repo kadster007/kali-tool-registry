@@ -1,0 +1,12 @@
+# Runtime / local-only data
+pivot-logs/
+*.log
+
+# Local editor cruft
+.vscode/
+.idea/
+*.swp
+
+# Backups left behind by setup scripts
+*.bak
+*.bak.*

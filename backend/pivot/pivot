@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+# pivot — run security tools through the Fold 6 phone pivot.
+# Picks the right proxy mechanism per tool (native SOCKS where supported,
+# proxychains otherwise). SOCKS5 only carries TCP — no UDP-based scans.
+
+SOCKS_HOST="127.0.0.1"
+SOCKS_PORT="9050"
+SOCKS="${SOCKS_HOST}:${SOCKS_PORT}"
+PIVOT_DIR="$HOME/pivot"
+MSF_RC="$PIVOT_DIR/msf.rc"
+
+usage() {
+    cat <<EOF
+pivot — run tools through the Fold 6 pivot SOCKS5 at ${SOCKS}
+
+USAGE:
+  pivot status                Show tunnel health + current pivot egress
+  pivot up                    Quick: are tunnel + microsocks both alive?
+  pivot msf [args]            msfconsole with Proxies + msf.rc pre-loaded
+  pivot nmap <target> [args]  nmap (auto -sT -Pn; SOCKS-safe defaults)
+  pivot curl [args]           curl with --socks5 ${SOCKS}
+  pivot sqlmap [args]         sqlmap with --proxy=socks5://${SOCKS}
+  pivot hydra [args]          hydra via proxychains4 (TCP services only)
+  pivot dig <name> [args]     DNS lookup via SOCKS (uses curl-doh fallback)
+  pivot shell                 drop into a sub-shell where proxychains is the default
+  pivot raw <cmd> [args]      run any tool via proxychains4
+  pivot help                  this message
+
+NOTES:
+  * SOCKS5 carries TCP only. Tools that need raw sockets (nmap -sS, -sU),
+    UDP (DNS UDP, SNMP), or ICMP (ping) won't route — they'll either fail
+    or fall back to your local network silently.
+  * Always scope tightly. A /24 × 5 ports via SOCKS is slow.
+EOF
+}
+
+require_tunnel() {
+    if ! ss -tln 2>/dev/null | grep -q "127.0.0.1:${SOCKS_PORT} "; then
+        echo "[pivot] ERROR: no listener on ${SOCKS} — tunnel is down." >&2
+        echo "        On the phone, run:  ~/pivot-up.sh" >&2
+        exit 3
+    fi
+}
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+    status)
+        bash "$HOME/pivot-status.sh"
+        ;;
+
+    up|alive|check)
+        if ss -tln 2>/dev/null | grep -q "127.0.0.1:${SOCKS_PORT} "; then
+            echo "[pivot] tunnel: UP (listener on ${SOCKS})"
+        else
+            echo "[pivot] tunnel: DOWN (no listener on ${SOCKS})"
+            exit 1
+        fi
+        ;;
+
+    msf|msfconsole)
+        require_tunnel
+        exec msfconsole -q -r "$MSF_RC" "$@"
+        ;;
+
+    nmap)
+        require_tunnel
+        # Auto-inject SOCKS-friendly defaults if user hasn't.
+        args=()
+        has_st=0; has_pn=0
+        for a in "$@"; do
+            case "$a" in
+                -sT|-sV|-sC|-sA|-sN|-sF|-sX|-sI|-sY|-sZ) has_st=1 ;;
+                -sS|-sU|-sO|-PR) echo "[pivot] WARNING: $a needs raw sockets/UDP; SOCKS will silently misbehave" >&2 ;;
+                -Pn|-P0) has_pn=1 ;;
+            esac
+            args+=("$a")
+        done
+        [ "$has_st" -eq 0 ] && args=("-sT" "${args[@]}")
+        [ "$has_pn" -eq 0 ] && args=("-Pn" "${args[@]}")
+        exec proxychains4 -q nmap "${args[@]}"
+        ;;
+
+    curl)
+        require_tunnel
+        exec curl --socks5 "$SOCKS" "$@"
+        ;;
+
+    sqlmap)
+        require_tunnel
+        exec sqlmap --proxy="socks5://${SOCKS}" "$@"
+        ;;
+
+    hydra)
+        require_tunnel
+        exec proxychains4 -q hydra "$@"
+        ;;
+
+    dig|nslookup)
+        require_tunnel
+        # Native dig/nslookup use UDP — can't pivot. Use curl+DoH (Cloudflare).
+        name="${1:-}"
+        if [ -z "$name" ]; then echo "Usage: pivot dig <name>"; exit 2; fi
+        echo "[pivot] DoH lookup via SOCKS (UDP DNS doesn't traverse SOCKS5):"
+        curl --socks5 "$SOCKS" -sS -H "accept: application/dns-json" \
+            "https://1.1.1.1/dns-query?name=${name}&type=A" | python3 -m json.tool 2>/dev/null \
+            || echo "[pivot] DoH lookup failed"
+        ;;
+
+    shell)
+        require_tunnel
+        echo "[pivot] sub-shell — type 'exit' to leave. Default-proxy via 'p <cmd>'."
+        bash --rcfile <(echo "
+            PS1='\[\e[33m\][pivot]\[\e[0m\] \w\$ '
+            export PIVOT_SOCKS='${SOCKS}'
+            alias p='proxychains4 -q'
+            alias pcurl='curl --socks5 ${SOCKS}'
+        ")
+        ;;
+
+    raw)
+        require_tunnel
+        if [ $# -eq 0 ]; then echo "Usage: pivot raw <cmd> [args]"; exit 2; fi
+        exec proxychains4 -q "$@"
+        ;;
+
+    help|-h|--help|"")
+        usage
+        ;;
+
+    *)
+        echo "[pivot] unknown subcommand: $cmd"
+        echo
+        usage
+        exit 2
+        ;;
+esac

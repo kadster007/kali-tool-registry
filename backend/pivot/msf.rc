@@ -1,0 +1,11 @@
+# Metasploit resource file — loaded automatically when started via `pivot msf`.
+# Pre-configures the SOCKS5 pivot through the Fold 6.
+
+setg Proxies socks5:127.0.0.1:9050
+setg ConnectTimeout 5
+setg ReverseAllowProxy true
+
+echo ""
+echo "[pivot] msfconsole loaded with SOCKS5 pivot at 127.0.0.1:9050"
+echo "[pivot] tip: scope scans tight (single hosts, few ports) — SOCKS5 is per-TCP, /24 sweeps are slow"
+echo ""

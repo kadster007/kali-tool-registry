@@ -1,0 +1,5 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# Termux:Widget shortcut — scan the LAN the phone is on right now.
+# Requires pivot to be up already (run pivot-up widget first if not).
+exec bash "$HOME/portable-pivot/frontend/scan-here"
+read -n1 -s -r -p "Press any key to close..."
