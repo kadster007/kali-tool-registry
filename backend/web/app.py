@@ -209,17 +209,6 @@ async def api_status():
     }
 
 
-@app.get("/api/status_panel", response_class=HTMLResponse)
-async def api_status_panel(request: Request):
-    """HTMX fragment for the dashboard status panel auto-refresh."""
-    return templates.TemplateResponse(request, "_status_panel.html", {
-        "tunnel_up": pivot_tunnel_up(),
-        "fold6_status": fold6_tailscale_status(),
-        "egress_pivot": pivot_egress_ip(),
-        "egress_direct": kadx_direct_ip(),
-    })
-
-
 @app.get("/scan", response_class=HTMLResponse)
 async def scan_form(request: Request):
     return templates.TemplateResponse(request, "scan.html", {
@@ -513,12 +502,16 @@ async def api_diagnostic(request: Request):
 
 @app.get("/api/fold6_panel", response_class=HTMLResponse)
 async def api_fold6_panel(request: Request, force: int = 1):
+    # Back-compat alias: returns the consolidated _status_panel with a forced phone-info refresh.
     try:
         info = phone_mod.phone_info(force=bool(force))
-        return templates.TemplateResponse(request, "_fold6_panel.html", {"phone": info})
+        return templates.TemplateResponse(request, "_status_panel.html", {
+            "tunnel_up": pivot_tunnel_up(),
+            "phone": info,
+        })
     except Exception as e:
         return templates.TemplateResponse(request, "_error_card.html",
-            {"title": "Fold 6", "msg": str(e), "retry": "/api/fold6_panel?force=1"})
+            {"title": "Status", "msg": str(e), "retry": "/api/status_panel"})
 
 
 @app.websocket("/ws/terminal")
