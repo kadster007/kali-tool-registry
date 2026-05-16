@@ -5,10 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ShadowOps</title>
 <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
 <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
 <header class="nav">
+  <button class="icon-btn" id="toggle-left" title="Toggle dashboard">☰</button>
   <div class="brand">ShadowOps</div>
   <nav>
     <a class="{% if page=='dashboard' %}active{% endif %}" href="/">Dashboard</a>
@@ -17,35 +19,63 @@
     <a class="{% if page=='logs' %}active{% endif %}" href="/logs">Logs</a>
   </nav>
   <div class="nav-right">
-    <button class="icon-btn" id="toggle-left" title="Toggle left panel">⬅</button>
-    <button class="icon-btn" id="toggle-right" title="Toggle right panel">➡</button>
+    <button class="icon-btn" id="toggle-term" title="Toggle terminal">⌨</button>
   </div>
 </header>
 
 <div class="layout" id="layout">
-  <!-- LEFT SIDEBAR: pivot + phone state -->
-  <aside class="sidebar left" id="sidebar-left"
-         hx-get="/api/left_panel" hx-trigger="load, every 12s" hx-swap="innerHTML">
-    <div class="sidebar-loading">Loading pivot state…</div>
+  <!-- LEFT SIDEBAR: dashboard (pivot + fold6 + phases) -->
+  <aside class="sidebar left" id="sidebar-left">
+    <!-- Each panel loads independently; failures don't cascade -->
+    <section class="panel" id="pivot-panel"
+             hx-get="/api/pivot_panel" hx-trigger="load" hx-swap="innerHTML">
+      <div class="panel-loading">Loading pivot…</div>
+    </section>
+
+    <section class="panel" id="fold6-panel"
+             hx-get="/api/fold6_panel?force=0" hx-trigger="load" hx-swap="innerHTML">
+      <div class="panel-loading">Loading Fold 6…</div>
+    </section>
+
+    <section class="panel" id="phases-panel"
+             hx-get="/api/phases_panel" hx-trigger="load" hx-swap="innerHTML">
+      <div class="panel-loading">Loading phases…</div>
+    </section>
   </aside>
 
-  <div class="resizer" id="resizer-left" data-side="left"></div>
+  <div class="resizer vertical" id="resizer-left" data-side="left"
+       title="Drag to resize · double-click to reset"></div>
 
-  <main class="main">
-    {% block content %}{% endblock %}
-  </main>
+  <div class="middle" id="middle">
+    <main class="main" id="main">
+      {% block content %}{% endblock %}
+    </main>
 
-  <div class="resizer" id="resizer-right" data-side="right"></div>
+    <div class="resizer horizontal" id="resizer-term"
+         title="Drag to resize terminal · double-click to reset"></div>
 
-  <!-- RIGHT SIDEBAR: live logs -->
-  <aside class="sidebar right" id="sidebar-right"
-         hx-get="/api/right_panel" hx-trigger="load, every 15s" hx-swap="innerHTML">
-    <div class="sidebar-loading">Loading logs…</div>
-  </aside>
+    <section class="terminal-panel" id="terminal-panel">
+      <div class="terminal-bar">
+        <span class="terminal-title">Terminal</span>
+        <span class="terminal-mode" id="term-mode">kadx</span>
+        <div class="terminal-actions">
+          <button class="btn-sm"  id="term-local">kadx shell</button>
+          <button class="btn-sm"  id="term-phone">SSH to phone</button>
+          <button class="btn-sm warn" id="term-reset">Reset</button>
+        </div>
+      </div>
+      <div class="terminal-host" id="terminal-host"></div>
+    </section>
+  </div>
 </div>
 
 <footer><small>ShadowOps · pivot via Fold 6 · runs on kadx</small></footer>
 
+<!-- xterm.js + FitAddon -->
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
+
 <script src="/static/sidebar.js"></script>
+<script src="/static/terminal.js"></script>
 </body>
 </html>

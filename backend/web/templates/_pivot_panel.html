@@ -1,0 +1,44 @@
+<div class="panel-header">
+  <h3>Pivot</h3>
+  <button class="icon-btn-sm" title="Refresh"
+          hx-get="/api/pivot_panel" hx-target="#pivot-panel" hx-swap="innerHTML">↻</button>
+</div>
+
+<div class="status-card compact">
+  <div class="status-row">
+    <span class="status-label">Tunnel</span>
+    {% if tunnel_up %}
+      <span class="status-pill up">UP</span>
+    {% else %}
+      <span class="status-pill down">DOWN</span>
+    {% endif %}
+  </div>
+  <div class="status-row">
+    <span class="status-label">Egress via pivot</span>
+    <span class="status-value">{{ egress_pivot or '—' }}</span>
+  </div>
+  <div class="status-row">
+    <span class="status-label">Kadx direct</span>
+    <span class="status-value">{{ egress_direct or '—' }}</span>
+  </div>
+</div>
+
+<div class="pivot-controls">
+  {% if tunnel_up %}
+    <button class="btn-sm warn"   hx-post="/api/pivot/release" hx-confirm="Kill autossh on phone?"
+            hx-target="#pivot-action-result" hx-swap="innerHTML">Release</button>
+    <button class="btn-sm"        hx-post="/api/pivot/reset"   hx-confirm="Kill + relaunch autossh on phone?"
+            hx-target="#pivot-action-result" hx-swap="innerHTML">Reset</button>
+    <button class="btn-sm danger" hx-post="/api/pivot/restart" hx-confirm="Kill microsocks + autossh, then restart?"
+            hx-target="#pivot-action-result" hx-swap="innerHTML">Restart</button>
+  {% else %}
+    <button class="btn"         hx-post="/api/pivot/start" hx-target="#pivot-action-result"
+            hx-swap="innerHTML">Start pivot</button>
+    <button class="btn-outline" onclick="document.getElementById('pivot-start-cmd').style.display='block'">Show command</button>
+  {% endif %}
+  <button class="btn-sm" id="open-phone-shell">SSH to phone</button>
+</div>
+<div id="pivot-action-result" class="hint small"></div>
+<pre id="pivot-start-cmd" class="terminal-static" style="display:none">
+~/portable-pivot/frontend/pivot-up.sh
+</pre>

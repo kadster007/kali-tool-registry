@@ -2,9 +2,9 @@
 {% block content %}
 <h1>Dashboard</h1>
 <p class="hint">
-  Pivot status, Fold 6 connection, and recent activity are shown in the sidebars
-  (auto-refresh every ~12s). Use the buttons in the left sidebar to control the
-  pivot, or jump to <a href="/scan">Scan</a> / <a href="/tools">Tools</a>.
+  Pivot, Fold 6, and Phases are in the left sidebar (manual refresh — no auto-poll).
+  Click any phase to expand its tools. Tool presets type their command into the
+  terminal below. Drag the resizers (left edge, top of terminal) to adjust.
 </p>
 
 <h2>Quick scan</h2>
@@ -17,4 +17,11 @@
   </label>
   <button type="submit">Scan via pivot</button>
 </form>
+
+<h2>Tips</h2>
+<ul class="hint">
+  <li>Fold 6 SSID showing as <code>&lt;unknown&gt;</code>? Android Settings → Apps → Termux:API → Permissions → enable <strong>Precise location</strong>.</li>
+  <li>Click <strong>SSH to phone</strong> (pivot panel or terminal bar) to open an interactive Termux session in the terminal below.</li>
+  <li>The terminal supports normal shell editing — arrow keys, tab completion, msfconsole, vim — all of it.</li>
+</ul>
 {% endblock %}

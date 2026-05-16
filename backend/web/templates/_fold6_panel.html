@@ -1,0 +1,64 @@
+<div class="panel-header">
+  <h3>Fold 6</h3>
+  <button class="icon-btn-sm" title="Re-check Wi-Fi"
+          hx-get="/api/fold6_panel?force=1" hx-target="#fold6-panel" hx-swap="innerHTML">↻</button>
+</div>
+
+<div class="status-card compact">
+  {% if phone.reachable %}
+    {% if phone.connection == 'wifi' %}
+      <div class="status-row">
+        <span class="status-label">Connection</span>
+        <span class="status-pill info">Wi-Fi</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">SSID</span>
+        <span class="status-value">{{ phone.ssid or '&lt;unknown&gt;' }}</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Phone IP</span>
+        <span class="status-value">{{ phone.ip or '—' }}</span>
+      </div>
+      {% if phone.frequency_mhz %}
+      <div class="status-row">
+        <span class="status-label">Band / speed</span>
+        <span class="status-value">{{ phone.frequency_mhz }} MHz / {{ phone.link_speed_mbps or '?' }} Mbps</span>
+      </div>
+      {% endif %}
+      {% if phone.rssi %}
+      <div class="status-row">
+        <span class="status-label">Signal</span>
+        <span class="status-value">{{ phone.rssi }} dBm</span>
+      </div>
+      {% endif %}
+    {% elif phone.connection == 'cellular' %}
+      <div class="status-row">
+        <span class="status-label">Connection</span>
+        <span class="status-pill info">Cellular</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Network type</span>
+        <span class="status-value">{{ phone.cellular_network_type or '—' }}</span>
+      </div>
+    {% else %}
+      <div class="status-row">
+        <span class="status-label">Connection</span>
+        <span class="status-value">{{ phone.connection }}</span>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="status-row">
+      <span class="status-label">Status</span>
+      <span class="status-pill down">UNREACHABLE</span>
+    </div>
+    {% if phone.raw_error %}
+    <div class="hint small" style="margin-top:0.3em">{{ phone.raw_error }}</div>
+    {% endif %}
+  {% endif %}
+</div>
+
+{% if phone.reachable and phone.ssid in ('<unknown ssid>', '<unknown>', None) and phone.connection == 'wifi' %}
+<div class="hint small">
+  SSID hidden: turn on <strong>Precise location</strong> in Android Settings → Apps → Termux:API → Permissions, then re-check.
+</div>
+{% endif %}

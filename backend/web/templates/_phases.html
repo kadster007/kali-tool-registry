@@ -1,0 +1,46 @@
+<div class="panel-header">
+  <h3>Phases</h3>
+  <button class="icon-btn-sm" title="Refresh"
+          hx-get="/api/phases_panel" hx-target="#phases-panel" hx-swap="innerHTML">↻</button>
+</div>
+
+<ul class="phase-tree">
+  {% for ph in phases %}
+  <li class="phase {% if ph.tools %}has-tools{% endif %}" data-phase-id="{{ ph.id }}">
+    <div class="phase-row" onclick="this.parentElement.classList.toggle('open')">
+      <span class="phase-caret">▶</span>
+      <span class="phase-num">{{ ph.id }}</span>
+      <span class="phase-name">{{ ph.name }}</span>
+      {% if ph.tools %}<span class="phase-count">{{ ph.tools|length }}</span>{% endif %}
+    </div>
+    <div class="phase-body">
+      <p class="hint small">{{ ph.blurb }}</p>
+      {% if not ph.tools %}
+        <p class="hint small">No tools indexed for this phase.</p>
+      {% else %}
+        <ul class="tool-list-sb">
+          {% for t in ph.tools %}
+          <li class="tool-row">
+            <div class="tool-name"><strong>{{ t.name or t._id }}</strong>
+              <span class="hint small">{{ t.description|default('',true)|truncate(60) }}</span>
+            </div>
+            <div class="tool-actions">
+              {% set presets = t.presets or [] %}
+              {% for p in presets[:3] %}
+                <button class="btn-xs"
+                        data-cmd="{{ p.command }}"
+                        title="{{ p.description or '' }}"
+                        onclick="shadowops.runPreset(this.dataset.cmd)">
+                  {{ p.name|truncate(18) }}
+                </button>
+              {% endfor %}
+              <a class="btn-xs outline" href="/tools/{{ t._id }}">⋯</a>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ul>

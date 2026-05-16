@@ -1,97 +1,94 @@
-// Drag-resizable sidebars + collapse toggles.
-// Persists widths + collapsed state in localStorage.
+// Layout: left sidebar (vertical drag), bottom terminal (horizontal drag).
+// All values persisted in localStorage. No auto-refresh of any panel.
+window.shadowops = window.shadowops || {};
 
 (function () {
   const layout = document.getElementById('layout');
-  const left = document.getElementById('sidebar-left');
-  const right = document.getElementById('sidebar-right');
-  const rLeft = document.getElementById('resizer-left');
-  const rRight = document.getElementById('resizer-right');
-  const btnL = document.getElementById('toggle-left');
-  const btnR = document.getElementById('toggle-right');
-
   if (!layout) return;
+  const left   = document.getElementById('sidebar-left');
+  const middle = document.getElementById('middle');
+  const term   = document.getElementById('terminal-panel');
+  const rLeft  = document.getElementById('resizer-left');
+  const rTerm  = document.getElementById('resizer-term');
+  const btnL   = document.getElementById('toggle-left');
+  const btnT   = document.getElementById('toggle-term');
 
-  // --- restore state from localStorage --------------------------------------
-  const LS_KEY = 'shadowops.layout.v1';
+  const LS_KEY = 'shadowops.layout.v2';
   const state = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-  function applyState() {
-    if (state.leftPx)  layout.style.setProperty('--left-w',  state.leftPx + 'px');
-    if (state.rightPx) layout.style.setProperty('--right-w', state.rightPx + 'px');
-    layout.classList.toggle('left-collapsed',  !!state.leftCollapsed);
-    layout.classList.toggle('right-collapsed', !!state.rightCollapsed);
-  }
+
   function save() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
-  applyState();
+  function apply() {
+    if (state.leftPx) layout.style.setProperty('--left-w', state.leftPx + 'px');
+    if (state.termPx) layout.style.setProperty('--term-h', state.termPx + 'px');
+    layout.classList.toggle('left-collapsed', !!state.leftCollapsed);
+    layout.classList.toggle('term-collapsed', !!state.termCollapsed);
+  }
+  apply();
 
-  // --- collapse toggles -----------------------------------------------------
-  btnL?.addEventListener('click', () => {
-    state.leftCollapsed = !state.leftCollapsed;
-    applyState(); save();
-  });
-  btnR?.addEventListener('click', () => {
-    state.rightCollapsed = !state.rightCollapsed;
-    applyState(); save();
-  });
+  btnL?.addEventListener('click', () => { state.leftCollapsed = !state.leftCollapsed; apply(); save(); requestFit(); });
+  btnT?.addEventListener('click', () => { state.termCollapsed = !state.termCollapsed; apply(); save(); requestFit(); });
 
-  // --- drag to resize -------------------------------------------------------
-  function attachDrag(handle, side) {
+  function requestFit() {
+    if (window.shadowops.terminalFit) window.shadowops.terminalFit();
+  }
+
+  function attachDrag(handle, axis, sizeKey, minPx, maxPx, getNewSize) {
     if (!handle) return;
-    handle.addEventListener('mousedown', startDrag);
-    handle.addEventListener('touchstart', startDrag, { passive: false });
+    handle.addEventListener('mousedown', start);
+    handle.addEventListener('touchstart', start, { passive: false });
+    handle.addEventListener('dblclick', () => { delete state[sizeKey]; layout.style.removeProperty(axis === 'x' ? '--left-w' : '--term-h'); save(); requestFit(); });
 
-    function startDrag(e) {
+    function start(e) {
       e.preventDefault();
       const move = (ev) => {
-        const x = (ev.touches ? ev.touches[0].clientX : ev.clientX);
+        const point = (ev.touches ? ev.touches[0] : ev);
         const layoutRect = layout.getBoundingClientRect();
-        let newW;
-        if (side === 'left') {
-          newW = Math.max(140, Math.min(500, x - layoutRect.left));
-          layout.style.setProperty('--left-w', newW + 'px');
-          state.leftPx = newW;
-        } else {
-          newW = Math.max(140, Math.min(500, layoutRect.right - x));
-          layout.style.setProperty('--right-w', newW + 'px');
-          state.rightPx = newW;
-        }
+        const px = Math.max(minPx, Math.min(maxPx, getNewSize(point, layoutRect)));
+        state[sizeKey] = px;
+        if (axis === 'x') layout.style.setProperty('--left-w', px + 'px');
+        else              layout.style.setProperty('--term-h', px + 'px');
+        requestFit();
       };
       const end = () => {
         document.removeEventListener('mousemove', move);
         document.removeEventListener('mouseup', end);
         document.removeEventListener('touchmove', move);
         document.removeEventListener('touchend', end);
-        document.body.classList.remove('dragging');
+        document.body.classList.remove('dragging-x', 'dragging-y');
         save();
+        requestFit();
       };
       document.addEventListener('mousemove', move);
       document.addEventListener('mouseup', end);
       document.addEventListener('touchmove', move, { passive: false });
       document.addEventListener('touchend', end);
-      document.body.classList.add('dragging');
+      document.body.classList.add(axis === 'x' ? 'dragging-x' : 'dragging-y');
     }
   }
-  attachDrag(rLeft,  'left');
-  attachDrag(rRight, 'right');
 
-  // --- htmx pivot-action toast feedback ------------------------------------
+  // Left sidebar drag — track X
+  attachDrag(rLeft, 'x', 'leftPx', 180, 520,
+    (pt, rect) => pt.clientX - rect.left);
+
+  // Terminal drag — track Y (bottom of middle)
+  attachDrag(rTerm, 'y', 'termPx', 120, 700,
+    (pt, rect) => rect.bottom - pt.clientY);
+
+  // Show pivot action results compactly
   document.body.addEventListener('htmx:afterRequest', (e) => {
-    const path = (e.detail.requestConfig?.path) || '';
-    if (!path.startsWith('/api/pivot/')) return;
-    const target = document.getElementById('start-result');
-    let body = '';
-    try { body = JSON.parse(e.detail.xhr.responseText); } catch (_) {}
-    let msg = '';
-    if (e.detail.successful) {
-      msg = (body && body.ok) ? '✓ Action completed' : '⚠ Action returned: ' + (body?.output || '?');
-    } else {
-      msg = '✗ Action failed (' + e.detail.xhr.status + ')';
+    const cfg = e.detail.requestConfig || {};
+    if (!cfg.path) return;
+    if (cfg.path.startsWith('/api/pivot/') && cfg.verb === 'post') {
+      const target = document.getElementById('pivot-action-result');
+      let body = null;
+      try { body = JSON.parse(e.detail.xhr.responseText); } catch (_) {}
+      const ok = e.detail.successful && body && body.ok !== false;
+      if (target) target.textContent = ok
+        ? '✓ ' + (body?.output?.split('\n').slice(-3).join(' ').trim() || 'ok')
+        : '⚠ ' + (body?.output || 'failed');
+      // Manually refresh just the pivot panel (no auto-refresh elsewhere)
+      htmx.ajax('GET', '/api/pivot_panel',
+                { target: '#pivot-panel', swap: 'innerHTML' });
     }
-    if (target) target.textContent = msg;
-    // Trigger an immediate refresh of the left panel after a pivot action
-    setTimeout(() => htmx.trigger('#sidebar-left', 'refresh'), 1500);
-  });
-  htmx.on('#sidebar-left', 'refresh', () => {
-    htmx.ajax('GET', '/api/left_panel', { target: '#sidebar-left', swap: 'innerHTML' });
   });
 })();

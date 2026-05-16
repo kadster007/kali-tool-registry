@@ -1,0 +1,13 @@
+<div class="panel-header"><h3>{{ title }}</h3></div>
+<div class="status-card compact error">
+  <div class="status-row">
+    <span class="status-label">Error</span>
+    <span class="status-value">{{ msg }}</span>
+  </div>
+  <div style="margin-top:0.4em">
+    <button class="btn-sm"
+            hx-get="{{ retry }}"
+            hx-target="closest .panel"
+            hx-swap="innerHTML">Retry</button>
+  </div>
+</div>

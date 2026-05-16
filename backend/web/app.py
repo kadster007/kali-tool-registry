@@ -30,8 +30,10 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Plai
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-# local helper
+# local helpers
 import phone as phone_mod
+import phases as phases_mod
+import terminal as terminal_mod
 
 # ---- paths -----------------------------------------------------------------
 HOME = Path(os.environ.get("HOME", "/home/kadx"))
@@ -409,3 +411,43 @@ async def api_pivot_start():
 @app.get("/api/pivot/start_command", response_class=PlainTextResponse)
 async def api_pivot_start_command():
     return "~/portable-pivot/frontend/pivot-up.sh"
+
+
+# --- phases panel + terminal --------------------------------------------
+
+@app.get("/api/phases_panel", response_class=HTMLResponse)
+async def api_phases_panel(request: Request):
+    try:
+        phases = phases_mod.phases_with_tools(TOOLS_DIR)
+    except Exception as e:
+        return templates.TemplateResponse(request, "_error_card.html",
+            {"title": "Phases", "msg": f"failed to load: {e}", "retry": "/api/phases_panel"})
+    return templates.TemplateResponse(request, "_phases.html", {"phases": phases})
+
+
+@app.get("/api/pivot_panel", response_class=HTMLResponse)
+async def api_pivot_panel(request: Request):
+    try:
+        return templates.TemplateResponse(request, "_pivot_panel.html", {
+            "tunnel_up": pivot_tunnel_up(),
+            "egress_pivot": pivot_egress_ip() if pivot_tunnel_up() else None,
+            "egress_direct": kadx_direct_ip(),
+        })
+    except Exception as e:
+        return templates.TemplateResponse(request, "_error_card.html",
+            {"title": "Pivot", "msg": str(e), "retry": "/api/pivot_panel"})
+
+
+@app.get("/api/fold6_panel", response_class=HTMLResponse)
+async def api_fold6_panel(request: Request, force: int = 1):
+    try:
+        info = phone_mod.phone_info(force=bool(force))
+        return templates.TemplateResponse(request, "_fold6_panel.html", {"phone": info})
+    except Exception as e:
+        return templates.TemplateResponse(request, "_error_card.html",
+            {"title": "Fold 6", "msg": str(e), "retry": "/api/fold6_panel?force=1"})
+
+
+@app.websocket("/ws/terminal")
+async def ws_terminal_endpoint(ws: WebSocket, cmd: str = "local"):
+    await terminal_mod.terminal_websocket(ws, cmd)
