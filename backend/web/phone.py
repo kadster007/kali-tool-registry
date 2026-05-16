@@ -141,13 +141,14 @@ def pivot_release() -> Dict:
 
 def _bg_start() -> str:
     # Background autossh, with BOTH reverse tunnels (-R 9050, -R 8022).
+    # Target order matches pivot-up.sh: FQDN -> short -> Tailscale IP -> LAN.
     return (
         "termux-wake-lock 2>/dev/null || true; "
         "pkill -f 'autossh.*-R.*9050' 2>/dev/null; sleep 1; "
         "(pgrep -fx 'microsocks -i 127.0.0.1 -p 9050' >/dev/null || "
         " (nohup microsocks -i 127.0.0.1 -p 9050 >~/microsocks.log 2>&1 & disown)); "
         "sleep 1; "
-        "for t in 100.105.140.70 kadx 192.168.1.165; do "
+        "for t in kadx.tailf08ebe.ts.net kadx 100.105.140.70 192.168.1.165; do "
         "  if timeout 4 bash -c \"exec 3<>/dev/tcp/$t/2222\" 2>/dev/null; then "
         "    AUTOSSH_PORT=0 AUTOSSH_GATETIME=0 nohup autossh -M 0 -fN "
         "      -p 2222 -i $HOME/.ssh/id_ed25519 "

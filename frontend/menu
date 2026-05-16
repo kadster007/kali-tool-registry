@@ -6,11 +6,12 @@
 set -u
 FRONTEND_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# kadx targets, in fallback order
+# kadx targets, in fallback order: FQDN -> short name -> Tailscale IP -> LAN
 KADX_TARGETS=(
-    "100.105.140.70"     # Tailscale
-    "kadx"               # MagicDNS
-    "192.168.1.165"      # LAN at home
+    "kadx.tailf08ebe.ts.net"   # FQDN (preferred)
+    "kadx"                      # MagicDNS short name
+    "100.105.140.70"            # Hardcoded Tailscale IP
+    "192.168.1.165"             # LAN at home
 )
 KADX_PORT="2222"
 KADX_USER="kadx"

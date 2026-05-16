@@ -5,9 +5,10 @@
 set -u
 
 KADX_TARGETS=(
-    "100.105.140.70"     # Tailscale IP — works anywhere if Tailscale routes are visible
-    "kadx"               # MagicDNS — sometimes resolves when bare IP doesn't
-    "192.168.1.165"      # LAN IP — works only when phone is on home Wi-Fi
+    "kadx.tailf08ebe.ts.net"   # FQDN — preferred (works anywhere Tailscale + MagicDNS are functional)
+    "kadx"                      # MagicDNS short name — same path with shorter spelling
+    "100.105.140.70"            # Hardcoded Tailscale IP — bypasses DNS but still needs Tailscale route
+    "192.168.1.165"             # LAN IP — only works when phone is on the same Wi-Fi as kadx
 )
 KADX_PORT="2222"
 KADX_USER="kadx"
@@ -32,25 +33,60 @@ else
     echo "   started (pid $(pgrep -fx "microsocks -i 127.0.0.1 -p $SOCKS_PORT"))"
 fi
 
-# pick a reachable kadx target
+# pick a reachable kadx target — with per-target diagnostics so the user
+# can see exactly which step failed if all targets fail (esp. on cellular)
 echo "==> finding a reachable kadx target..."
 PICKED=""
 for t in "${KADX_TARGETS[@]}"; do
-    printf "   trying %s ... " "$t"
+    printf "   %-30s " "$t"
+    # 1. DNS resolution (skip if already an IP)
+    if [[ "$t" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        resolved="(ip)"
+    else
+        resolved=$(getent hosts "$t" 2>/dev/null | awk '{print $1}' | head -1)
+        if [ -z "$resolved" ]; then
+            # busybox / Termux often lacks getent — try ping name resolution
+            resolved=$(ping -c 1 -W 1 -q "$t" 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+        fi
+        [ -z "$resolved" ] && resolved="DNS-FAIL"
+    fi
+    # 2. TCP probe to port 2222
+    if [ "$resolved" = "DNS-FAIL" ]; then
+        echo "✗ ($resolved)"
+        continue
+    fi
     if timeout 4 bash -c "exec 3<>/dev/tcp/$t/$KADX_PORT" 2>/dev/null; then
-        echo "REACHABLE"
+        echo "✓ TCP OK   ($resolved:$KADX_PORT)"
         PICKED="$t"
         break
     else
-        echo "no route / timeout"
+        echo "✗ TCP timeout/refused ($resolved:$KADX_PORT)"
     fi
 done
 
 if [ -z "$PICKED" ]; then
     cat <<EOF
+
 ==> ERROR: no kadx target is reachable from this phone.
-    Check Tailscale on phone (toggle off/on; ensure exit-node is OFF).
-    If at home, confirm you're on the same Wi-Fi as kadx.
+
+Likely causes (in order of probability):
+
+  1. Termux can't see Tailscale's routes — known Termux+Android+Tailscale
+     issue. Try (in the Tailscale Android app):
+       * Toggle exit-node to "None"
+       * Toggle Tailscale OFF then back ON
+       * Android Settings -> Network -> VPN -> Tailscale -> Always-on VPN
+
+  2. You're on cellular and Tailscale isn't establishing direct or relayed
+     paths. Look at the Tailscale app: it should show "Connected".
+
+  3. The phone is on home Wi-Fi but on a different subnet than kadx (e.g.
+     behind the TP-Link AP at 192.168.0.x while kadx is on 192.168.1.x).
+     In that case LAN fallback won't work either; only Tailscale will,
+     and that's blocked by #1.
+
+  4. Sshd on kadx is down. From any device that CAN reach kadx:
+       ss -tlnp | grep ':2222'
 EOF
     exit 2
 fi
