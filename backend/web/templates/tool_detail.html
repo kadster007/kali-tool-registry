@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/tools">← all tools</a></p>
+<h1>{{ tool.name or tool._id }}</h1>
+<p>{{ tool.description or '' }}</p>
+{% if tool.category %}<p><strong>Category:</strong> {{ tool.category }}</p>{% endif %}
+
+{% if tool.flags %}
+<h2>Flags</h2>
+<table class="tool-flags">
+  <thead><tr><th>Flag</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    {% for f in tool.flags %}
+    <tr><td><code>{{ f.flag }}</code></td><td>{{ f.type or '' }}</td><td>{{ f.description or '' }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if tool.presets %}
+<h2>Presets</h2>
+<ul class="presets">
+  {% for p in tool.presets %}
+  <li><strong>{{ p.name }}</strong> — <code>{{ p.command }}</code><br/><small>{{ p.description or '' }}</small></li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if tool.examples %}
+<h2>Examples</h2>
+<ul>
+  {% for e in tool.examples %}
+  <li><code>{{ e }}</code></li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if tool.notes %}
+<h2>Notes</h2>
+<p>{{ tool.notes }}</p>
+{% endif %}
+
+{% if tool._error %}
+<p class="banner-warn">parse error: {{ tool._error }}</p>
+{% endif %}
+{% endblock %}

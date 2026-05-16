@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ShadowOps</title>
+<script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<header class="nav">
+  <div class="brand">ShadowOps</div>
+  <nav>
+    <a class="{% if page=='dashboard' %}active{% endif %}" href="/">Dashboard</a>
+    <a class="{% if page=='scan' %}active{% endif %}" href="/scan">Scan</a>
+    <a class="{% if page=='tools' %}active{% endif %}" href="/tools">Tools</a>
+    <a class="{% if page=='logs' %}active{% endif %}" href="/logs">Logs</a>
+  </nav>
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+<footer>
+  <small>ShadowOps · pivot via Fold 6 · runs on kadx</small>
+</footer>
+</body>
+</html>

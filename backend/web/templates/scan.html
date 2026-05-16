@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Run a scan</h1>
+
+{% if not tunnel_up %}
+<div class="banner-warn">
+  Pivot tunnel is <strong>DOWN</strong>. Start it from the phone first
+  (Termux: <code>~/portable-pivot/frontend/menu</code> → Start pivot).
+  Scans submitted now will fail.
+</div>
+{% endif %}
+
+<form method="post" action="/scan" class="scan-form">
+  <label>Target (host or CIDR)
+    <input name="target" required placeholder="192.168.1.0/24 or 192.168.1.42" />
+  </label>
+  <label>Ports
+    <input name="ports" value="22,80,443,445,3389,8080,8443" />
+  </label>
+  <button type="submit">Run nmap via pivot</button>
+</form>
+
+<p class="hint">
+  Runs as <code>pivot nmap -T4 -p &lt;ports&gt; &lt;target&gt;</code> on kadx,
+  routing TCP probes through the Fold 6's current network.
+  TCP-only (no <code>-sU</code>/<code>-sS</code>).
+</p>
+{% endblock %}

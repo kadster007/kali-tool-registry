@@ -1,0 +1,22 @@
+<div class="status-card">
+  <div class="status-row">
+    <span class="status-label">Pivot tunnel</span>
+    {% if tunnel_up %}
+      <span class="status-pill up">UP</span>
+    {% else %}
+      <span class="status-pill down">DOWN</span>
+    {% endif %}
+  </div>
+  <div class="status-row">
+    <span class="status-label">Fold 6</span>
+    <span class="status-value">{{ fold6_status or '—' }}</span>
+  </div>
+  <div class="status-row">
+    <span class="status-label">Phone egress (pivot)</span>
+    <span class="status-value">{{ egress_pivot or '—' }}</span>
+  </div>
+  <div class="status-row">
+    <span class="status-label">Kadx direct egress</span>
+    <span class="status-value">{{ egress_direct or '—' }}</span>
+  </div>
+</div>

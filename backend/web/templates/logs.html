@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Logs</h1>
+<table class="logs">
+  <thead><tr><th>When</th><th>Size</th><th>Path</th><th></th></tr></thead>
+  <tbody>
+    {% for r in logs %}
+    <tr>
+      <td>{{ r.mtime }}</td>
+      <td>{{ r.size }}</td>
+      <td><code>{{ r.rel }}</code></td>
+      <td><a class="btn-sm" href="/logs/view?path={{ r.path }}">view</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4"><em>No logs.</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

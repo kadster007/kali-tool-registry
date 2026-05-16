@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Dashboard</h1>
+
+<section hx-get="/api/status_panel" hx-trigger="load, every 8s" hx-swap="innerHTML">
+  <div class="status-card">
+    <div class="status-row"><span class="status-label">Loading…</span></div>
+  </div>
+</section>
+
+<h2>Recent scans</h2>
+<table class="logs">
+  <thead><tr><th>When</th><th>Size</th><th>Log</th><th></th></tr></thead>
+  <tbody>
+    {% for r in recent %}
+    <tr>
+      <td>{{ r.mtime }}</td>
+      <td>{{ r.size }}</td>
+      <td><code>{{ r.rel }}</code></td>
+      <td><a class="btn-sm" href="/logs/view?path={{ r.path }}">view</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4"><em>No scans yet. <a href="/scan">Run one</a>.</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p style="margin-top:2em">
+  <a class="btn" href="/scan">+ New scan</a>
+  <a class="btn-outline" href="/tools">Browse tools</a>
+</p>
+{% endblock %}

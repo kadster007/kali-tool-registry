@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/logs">← all logs</a></p>
+<h1>{{ log_path }}</h1>
+<pre class="terminal">{{ log_content }}</pre>
+{% endblock %}

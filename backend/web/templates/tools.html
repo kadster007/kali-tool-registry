@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Tools</h1>
+{% if registry.get('playbooks') %}
+<section class="playbooks">
+  <h2>Playbooks</h2>
+  <ul>
+    {% for pb in registry.playbooks %}
+    <li><strong>{{ pb.name }}</strong> — {{ pb.description }}</li>
+    {% endfor %}
+  </ul>
+  <p class="hint">Playbook execution is not yet wired into the web UI.</p>
+</section>
+{% endif %}
+
+<section class="tools">
+<h2>Tool registry</h2>
+<table class="tool-list">
+  <thead><tr><th>Name</th><th>Category</th><th>Description</th></tr></thead>
+  <tbody>
+    {% for t in tools %}
+    <tr>
+      <td><a href="/tools/{{ t._id }}">{{ t.name or t._id }}</a></td>
+      <td>{{ t.category or '—' }}</td>
+      <td>{{ t.description or '' }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3"><em>No tools indexed.</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</section>
+{% endblock %}
