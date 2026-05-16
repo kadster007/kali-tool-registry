@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/hosts">← all hosts</a></p>
+
+<div class="host-head">
+  <h1>{{ host.ip }}</h1>
+  {% if host.state == 'up' %}<span class="status-pill up">up</span>
+  {% else %}<span class="status-pill down">{{ host.state }}</span>{% endif %}
+</div>
+
+<div class="host-meta">
+  {% if host.hostnames %}<div><strong>Hostnames:</strong> {{ host.hostnames|join(', ') }}</div>{% endif %}
+  {% if host.mac %}<div><strong>MAC:</strong> <code>{{ host.mac }}</code></div>{% endif %}
+  {% if host.os %}<div><strong>OS:</strong> {{ host.os }}</div>{% endif %}
+  <div><strong>First seen:</strong> {{ host.first_seen | datetimeformat }}</div>
+  <div><strong>Last seen:</strong> {{ host.last_seen | datetimeformat }}</div>
+  <div><strong>Source scans:</strong> {{ host.sources|length }}</div>
+</div>
+
+<h2>Ports</h2>
+<table class="port-table">
+  <thead>
+    <tr><th>Port</th><th>State</th><th>Service</th><th>Version</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    {% for p in host.ports %}
+    <tr class="port-row {% if p.state != 'open' %}port-closed{% endif %}">
+      <td><code>{{ p.port }}/{{ p.proto }}</code></td>
+      <td>
+        {% if p.state == 'open' %}<span class="status-pill up">open</span>
+        {% else %}<span class="hint small">{{ p.state }}</span>{% endif %}
+      </td>
+      <td>{{ p.service or '' }}</td>
+      <td>
+        {{ p.product or '' }} {{ p.version or '' }}
+        {% if p.extrainfo %}<span class="hint small">({{ p.extrainfo }})</span>{% endif %}
+      </td>
+      <td>
+        {% if p.scripts %}
+          <details>
+            <summary class="hint small">{{ p.scripts|length }} script result{% if p.scripts|length != 1 %}s{% endif %}</summary>
+            {% for s in p.scripts %}
+            <div class="script-out">
+              <div class="hint small"><strong>{{ s.id }}</strong></div>
+              <pre class="terminal-static">{{ s.output }}</pre>
+            </div>
+            {% endfor %}
+          </details>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if host.host_scripts %}
+<h2>Host scripts</h2>
+{% for s in host.host_scripts %}
+  <div class="script-out">
+    <div class="hint small"><strong>{{ s.id }}</strong></div>
+    <pre class="terminal-static">{{ s.output }}</pre>
+  </div>
+{% endfor %}
+{% endif %}
+
+<h2>Actions</h2>
+<p class="hint">These run via the terminal at the bottom. Output streams in real time.</p>
+<div class="host-actions">
+  <button class="btn-sm" onclick="shadowops.runPreset({
+    command: 'pivot nmap -sT -Pn -sV --version-all -p {ports} {target}',
+    params: ['ports','target'],
+    param_defaults: {ports:'1-1000', target:'{{ host.ip }}'},
+  })">Service scan (1-1000)</button>
+
+  <button class="btn-sm" onclick="shadowops.runPreset({
+    command: 'pivot nmap -sT -Pn -sV -p- {target}',
+    params: ['target'],
+    param_defaults: {target:'{{ host.ip }}'},
+  })">Full port scan</button>
+
+  <button class="btn-sm" onclick="shadowops.runPreset({
+    command: 'pivot nmap -sT -Pn -sV --script vulners,vuln -p {ports} {target}',
+    params: ['ports','target'],
+    param_defaults: {ports:'1-1000', target:'{{ host.ip }}'},
+  })">🛡 Vuln scan (nmap vulners)</button>
+
+  <button class="btn-sm" onclick="shadowops.runPreset({
+    command: 'searchsploit {service}',
+    params: ['service'],
+    param_defaults: {service:'{{ (host.ports|selectattr("state","equalto","open")|map(attribute="product")|select|list|first) or host.os or "" }}'},
+  })">🔎 searchsploit (top product)</button>
+</div>
+
+<h2>Source scans</h2>
+<ul class="hint small">
+  {% for s in host.sources[-10:] %}
+  <li>{{ s.ts | datetimeformat }} — <code>{{ s.args or '' }}</code></li>
+  {% endfor %}
+</ul>
+{% endblock %}

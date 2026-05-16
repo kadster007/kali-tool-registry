@@ -210,6 +210,53 @@ footer { text-align: center; color: var(--muted); padding: 0.3rem; font-size: 0.
 .btn-xs.phone { background: rgba(126, 231, 135, 0.15); border-color: var(--info); color: var(--info); }
 .btn-xs.phone:hover { background: rgba(126, 231, 135, 0.25); }
 
+/* --- Hosts table + per-host detail ------------------- */
+table.host-table, table.port-table {
+  width: 100%; border-collapse: collapse;
+  margin: 0.5rem 0 1.2rem;
+}
+table.host-table th, table.host-table td,
+table.port-table th, table.port-table td {
+  padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--border); text-align: left;
+  vertical-align: top;
+}
+table.host-table th, table.port-table th {
+  color: var(--muted); font-weight: 500; font-size: 0.85rem;
+  background: var(--panel);
+}
+tr.host-row:hover, tr.port-row:hover { background: var(--panel-2); }
+tr.host-down { opacity: 0.55; }
+tr.port-closed { opacity: 0.55; }
+
+.port-chip {
+  display: inline-block;
+  background: var(--panel-3); color: var(--info);
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 1px 6px; margin: 1px;
+  font-family: var(--mono); font-size: 0.72rem;
+}
+
+.host-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.2rem; }
+.host-meta {
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.5rem 0.8rem; margin-bottom: 1rem;
+}
+.host-meta div { margin: 0.15rem 0; font-size: 0.88rem; }
+.host-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.6rem 0 1.2rem; }
+.script-out { margin: 0.4rem 0; }
+.script-out pre { margin: 0.2rem 0; }
+
+/* Phase summary in the sidebar (under each phase's blurb) */
+.phase-summary-wrap { padding: 0.15rem 0 0.35rem; }
+.phase-summary { font-size: 0.78rem; }
+.phase-summary-link {
+  display: inline-block; color: var(--info); text-decoration: none;
+  background: rgba(126,231,135,.08);
+  padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.phase-summary-link:hover { background: rgba(126,231,135,.18); }
+
 /* --- Notes page --------------------------------------- */
 .notes-form { display: flex; flex-direction: column; gap: 0.5rem; max-width: 720px; }
 .notes-form label { display: flex; flex-direction: column; gap: 0.2rem; color: var(--muted); font-size: 0.85rem; }

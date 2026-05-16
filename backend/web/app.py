@@ -36,6 +36,7 @@ import phases as phases_mod
 import terminal as terminal_mod
 import notes as notes_mod
 import version as version_mod
+import scan as scan_mod
 
 # ---- paths -----------------------------------------------------------------
 HOME = Path(os.environ.get("HOME", "/home/kadx"))
@@ -603,6 +604,51 @@ async def api_notes_add(request: Request):
 async def api_notes_delete(nid: str):
     ok = notes_mod.delete(nid)
     return RedirectResponse(url="/notes", status_code=303)
+
+
+# --- structured hosts (Phase 2 / 3) ------------------------------------
+
+@app.get("/hosts", response_class=HTMLResponse)
+async def hosts_list(request: Request):
+    hosts = scan_mod.hosts_sorted()
+    return templates.TemplateResponse(request, "hosts.html", {
+        "hosts": hosts,
+        "page": "hosts",
+    })
+
+
+@app.get("/hosts/{ip}", response_class=HTMLResponse)
+async def host_detail(request: Request, ip: str):
+    h = scan_mod.host_by_ip(ip)
+    if not h:
+        return HTMLResponse(f"<p>Host <code>{ip}</code> not in any scan yet. Run a scan first.</p>", status_code=404)
+    return templates.TemplateResponse(request, "host_detail.html", {
+        "host": h,
+        "page": "hosts",
+    })
+
+
+@app.get("/api/phase_summary/{phase_id}", response_class=HTMLResponse)
+async def api_phase_summary(request: Request, phase_id: int):
+    """Tiny summary fragment for the sidebar phase header."""
+    hosts = scan_mod.hosts_sorted()
+    open_ports = sum(1 for h in hosts for p in h["ports"] if p.get("state") == "open")
+    hosts_up = sum(1 for h in hosts if h.get("state") == "up")
+    vuln_hosts = sum(1 for h in hosts if any(
+        s.get("id", "").startswith("vuln") or "vulners" in (s.get("id") or "")
+        for s in h.get("host_scripts") or []
+    ) or any(
+        any("vulner" in (sc.get("id") or "") or "vuln" in (sc.get("id") or "")
+            for sc in (p.get("scripts") or []))
+        for p in h["ports"]
+    ))
+    return templates.TemplateResponse(request, "_phase_summary.html", {
+        "phase_id": phase_id,
+        "hosts_up": hosts_up,
+        "open_ports": open_ports,
+        "vuln_hosts": vuln_hosts,
+        "total_hosts": len(hosts),
+    })
 
 
 @app.get("/notes/attachment/{nid}")

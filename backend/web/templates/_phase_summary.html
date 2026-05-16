@@ -1,0 +1,17 @@
+<div class="phase-summary">
+  {% if phase_id == 2 %}
+    {% if total_hosts == 0 %}
+      <span class="hint small">No scans yet</span>
+    {% else %}
+      <a href="/hosts" class="phase-summary-link">
+        <strong>{{ hosts_up }}</strong> hosts up · <strong>{{ open_ports }}</strong> open ports
+      </a>
+    {% endif %}
+  {% elif phase_id == 3 or phase_id == 4 %}
+    {% if vuln_hosts == 0 %}
+      <span class="hint small">No vuln data — run "Vuln scan" on a host</span>
+    {% else %}
+      <a href="/hosts" class="phase-summary-link"><strong>{{ vuln_hosts }}</strong> host{{ '' if vuln_hosts==1 else 's' }} with vuln data</a>
+    {% endif %}
+  {% endif %}
+</div>

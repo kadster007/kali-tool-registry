@@ -15,6 +15,12 @@
     </div>
     <div class="phase-body">
       <p class="hint small">{{ ph.blurb }}</p>
+      {% if ph.id in [2, 3, 4] %}
+      <div hx-get="/api/phase_summary/{{ ph.id }}" hx-trigger="load, every 30s"
+           hx-swap="innerHTML" class="phase-summary-wrap">
+        <span class="hint small">…</span>
+      </div>
+      {% endif %}
       {% if not ph.tools %}
         <p class="hint small">No tools indexed for this phase.</p>
       {% else %}

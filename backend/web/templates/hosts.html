@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Hosts <span class="hint">({{ hosts|length }})</span></h1>
+<p class="hint">Aggregated across every <code>nmap -oX</code> file in <code>~/pivot-logs/</code>.
+Click a host for service detail + vuln check.</p>
+
+{% if not hosts %}
+<p class="hint">No structured scan data yet. Run any nmap preset from the Phases panel,
+or <code>pivot nmap -sT -Pn -sV {target}</code> in the terminal — XML output is now
+auto-emitted alongside the human log.</p>
+{% endif %}
+
+<table class="host-table">
+  <thead>
+    <tr>
+      <th>IP</th>
+      <th>Hostname</th>
+      <th>State</th>
+      <th>Open ports</th>
+      <th>OS</th>
+      <th>Last seen</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for h in hosts %}
+    <tr class="host-row {% if h.state != 'up' %}host-down{% endif %}">
+      <td><a href="/hosts/{{ h.ip }}"><code>{{ h.ip }}</code></a></td>
+      <td>{{ h.hostnames|join(', ') or '—' }}</td>
+      <td>
+        {% if h.state == 'up' %}<span class="status-pill up">up</span>
+        {% else %}<span class="status-pill down">{{ h.state }}</span>{% endif %}
+      </td>
+      <td>
+        {% set open_ports = h.ports|selectattr("state","equalto","open")|list %}
+        {% if open_ports %}
+          {% for p in open_ports[:10] %}
+            <span class="port-chip" title="{{ p.service or '' }} {{ p.product or '' }} {{ p.version or '' }}">{{ p.port }}/{{ p.proto }}</span>
+          {% endfor %}
+          {% if open_ports|length > 10 %}<span class="hint small">+{{ open_ports|length - 10 }}</span>{% endif %}
+        {% else %}
+          <span class="hint small">none</span>
+        {% endif %}
+      </td>
+      <td><span class="hint small">{{ h.os or '—' }}</span></td>
+      <td><span class="hint small">{{ h.last_seen | datetimeformat }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
