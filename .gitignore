@@ -6,6 +6,7 @@
 # Local editor cruft
 *.log
 pivot-logs/
+__pycache__/
 # Runtime / local-only data
 *.swp
 .venv/
