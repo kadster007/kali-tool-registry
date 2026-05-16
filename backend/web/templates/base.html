@@ -17,6 +17,7 @@
     <a class="{% if page=='scan' %}active{% endif %}" href="/scan">Scan</a>
     <a class="{% if page=='tools' %}active{% endif %}" href="/tools">Tools</a>
     <a class="{% if page=='logs' %}active{% endif %}" href="/logs">Logs</a>
+    <a class="{% if page=='notes' %}active{% endif %}" href="/notes">Notes</a>
   </nav>
   <div class="nav-right">
     <button class="icon-btn" id="toggle-term" title="Toggle terminal">⌨</button>
@@ -83,7 +84,14 @@
   </div>
 </div>
 
-<footer><small>ShadowOps · pivot via Fold 6 · runs on kadx</small></footer>
+<footer>
+  <small>
+    ShadowOps · {{ app_version().display }} ·
+    <a href="#" onclick="shadowops.updateKadx(event)">update kadx</a> ·
+    <a href="#" onclick="shadowops.updatePhone(event)">update phone</a>
+  </small>
+  <div id="update-result" class="hint small" style="display:none"></div>
+</footer>
 
 <!-- xterm.js + FitAddon -->
 <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>

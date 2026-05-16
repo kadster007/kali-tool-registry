@@ -29,6 +29,9 @@
     <button class="btn-outline" onclick="document.getElementById('pivot-start-cmd').style.display='block'">Show cmd</button>
   {% endif %}
   <button class="btn-sm" id="open-phone-shell" title="SSH to phone via the dedicated tunnel channel">SSH to phone</button>
+  <button class="btn-sm danger" hx-post="/api/pivot/kill_autossh" hx-confirm="Kill autossh + microsocks on the phone? (Tunnel will need manual restart.)"
+          hx-target="#pivot-action-result" hx-swap="innerHTML"
+          title="Force-stop autossh on the phone (good for flapping tunnels)">Kill autossh</button>
 </div>
 
 <div class="pivot-controls" style="margin-top:0.3em">

@@ -34,6 +34,8 @@ from fastapi.templating import Jinja2Templates
 import phone as phone_mod
 import phases as phases_mod
 import terminal as terminal_mod
+import notes as notes_mod
+import version as version_mod
 
 # ---- paths -----------------------------------------------------------------
 HOME = Path(os.environ.get("HOME", "/home/kadx"))
@@ -51,6 +53,18 @@ LOGS_DIR.mkdir(parents=True, exist_ok=True)
 app = FastAPI(title="ShadowOps")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+def _datetimeformat(value):
+    from datetime import datetime
+    try:
+        return datetime.fromtimestamp(int(value)).strftime("%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return str(value)
+
+
+templates.env.filters["datetimeformat"] = _datetimeformat
+templates.env.globals["app_version"] = version_mod.info
 
 # ---- helpers ---------------------------------------------------------------
 
@@ -500,3 +514,101 @@ async def api_fold6_panel(request: Request, force: int = 1):
 @app.websocket("/ws/terminal")
 async def ws_terminal_endpoint(ws: WebSocket, cmd: str = "local"):
     await terminal_mod.terminal_websocket(ws, cmd)
+
+
+# --- version + updates --------------------------------------------------
+
+@app.get("/api/version")
+async def api_version():
+    return version_mod.info()
+
+
+def _bg_restart_self():
+    import threading
+    def _r():
+        time.sleep(1.5)
+        os.system("systemctl --user restart shadowops-web.service")
+    threading.Thread(target=_r, daemon=True).start()
+
+
+@app.post("/api/update/kadx")
+async def api_update_kadx():
+    """git pull on kadx + restart the web service (in the background)."""
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "pull", "--ff-only"],
+            capture_output=True, text=True, timeout=30,
+        )
+        ok = r.returncode == 0
+        out = (r.stdout or "") + (r.stderr or "")
+        if ok:
+            _bg_restart_self()
+            out += "\n[restart] shadowops-web restarting in ~2s"
+        return {"ok": ok, "output": out.strip()[-2000:]}
+    except Exception as e:
+        return {"ok": False, "output": str(e)}
+
+
+@app.post("/api/update/phone")
+async def api_update_phone():
+    """git pull on phone via the tunnel. Optionally restart pivot if user wants
+    to (we don't auto-restart because that would kill our own SSH path)."""
+    r = phone_mod._ssh_phone(
+        "cd ~/portable-pivot 2>/dev/null && git pull --ff-only 2>&1 || echo 'no repo at ~/portable-pivot'",
+        timeout=30,
+    )
+    out = (r.stdout or "") + (r.stderr or "")
+    return {"ok": r.returncode == 0, "output": out.strip()[-2000:]}
+
+
+@app.post("/api/pivot/kill_autossh")
+async def api_pivot_kill_autossh():
+    """Kill the autossh process on the phone (forces a clean stop, no auto-reconnect)."""
+    r = phone_mod._ssh_phone(
+        "pkill -f 'autossh.*-R.*9050' 2>/dev/null && echo killed-autossh; "
+        "pkill -x microsocks 2>/dev/null && echo killed-microsocks; "
+        "echo done",
+        timeout=10,
+    )
+    return {"ok": r.returncode == 0, "output": (r.stdout or "") + (r.stderr or "")}
+
+
+# --- personal notes -----------------------------------------------------
+
+@app.get("/notes", response_class=HTMLResponse)
+async def notes_page(request: Request):
+    return templates.TemplateResponse(request, "notes.html", {
+        "notes": notes_mod.list_notes(),
+        "page": "notes",
+    })
+
+
+@app.post("/api/notes")
+async def api_notes_add(request: Request):
+    form = await request.form()
+    title = form.get("title", "")
+    body = form.get("body", "")
+    file = form.get("attachment")
+    att_name = None
+    att_bytes = None
+    # UploadFile vs str
+    if file and hasattr(file, "filename") and file.filename:
+        att_name = file.filename
+        att_bytes = await file.read()
+    notes_mod.add(body=body, title=title, attachment_name=att_name, attachment_bytes=att_bytes)
+    return RedirectResponse(url="/notes", status_code=303)
+
+
+@app.post("/api/notes/{nid}/delete")
+async def api_notes_delete(nid: str):
+    ok = notes_mod.delete(nid)
+    return RedirectResponse(url="/notes", status_code=303)
+
+
+@app.get("/notes/attachment/{nid}")
+async def notes_attachment(nid: str):
+    p = notes_mod.get_attachment_path(nid)
+    if not p:
+        return PlainTextResponse("not found", status_code=404)
+    from fastapi.responses import FileResponse
+    return FileResponse(p)

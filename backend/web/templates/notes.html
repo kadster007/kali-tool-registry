@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Notes</h1>
+<p class="hint">Personal log. Bugs, ideas, screenshots — anything. Stored on kadx at
+<code>~/portable-pivot-data/notes/</code>, outside the git repo.</p>
+
+<form method="post" action="/api/notes" enctype="multipart/form-data" class="notes-form">
+  <label>Title (optional)
+    <input name="title" placeholder="something short" />
+  </label>
+  <label>Body
+    <textarea name="body" rows="6" placeholder="What did you observe?" required></textarea>
+  </label>
+  <label>Attachment (optional — screenshot, log, anything ≤10MB)
+    <input type="file" name="attachment" />
+  </label>
+  <button type="submit">Save note</button>
+</form>
+
+<h2>Saved ({{ notes|length }})</h2>
+{% for n in notes %}
+<article class="note">
+  <div class="note-head">
+    <div>
+      {% if n.title %}<strong>{{ n.title }}</strong> · {% endif %}
+      <span class="hint small">{{ n.ts | datetimeformat }}</span>
+    </div>
+    <form method="post" action="/api/notes/{{ n.id }}/delete" style="display:inline"
+          onsubmit="return confirm('Delete this note?')">
+      <button class="btn-xs" type="submit">delete</button>
+    </form>
+  </div>
+  <pre class="note-body">{{ n.body }}</pre>
+  {% if n.attachment %}
+    <div class="hint small">
+      📎 <a href="/notes/attachment/{{ n.id }}">{{ n.attachment }}</a>
+      ({{ (n.attachment_size or 0) // 1024 }} KB)
+    </div>
+  {% endif %}
+</article>
+{% else %}
+<p class="hint">No notes yet.</p>
+{% endfor %}
+{% endblock %}

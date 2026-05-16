@@ -74,6 +74,39 @@ window.shadowops = window.shadowops || {};
   attachDrag(rTerm, 'y', 'termPx', 120, 700,
     (pt, rect) => rect.bottom - pt.clientY);
 
+  // Update kadx / phone (footer shortcuts)
+  function showUpdate(html, hold=8000) {
+    const el = document.getElementById('update-result');
+    if (!el) return;
+    el.innerHTML = html;
+    el.style.display = 'block';
+    if (hold) setTimeout(() => { el.style.display = 'none'; }, hold);
+  }
+  shadowops.updateKadx = async function(ev) {
+    ev?.preventDefault();
+    showUpdate('updating kadx…', 0);
+    try {
+      const r = await fetch('/api/update/kadx', { method: 'POST' });
+      const d = await r.json();
+      showUpdate((d.ok ? '✓ kadx updated · restarting' : '✗ kadx update failed') +
+                 '<pre class="terminal-static" style="max-height:14em">' +
+                 (d.output || '').replace(/[<&]/g, c => ({'<':'&lt;','&':'&amp;'}[c])) + '</pre>',
+                 d.ok ? 15000 : 0);
+    } catch (e) { showUpdate('✗ error: ' + e.message, 0); }
+  };
+  shadowops.updatePhone = async function(ev) {
+    ev?.preventDefault();
+    showUpdate('updating phone via tunnel…', 0);
+    try {
+      const r = await fetch('/api/update/phone', { method: 'POST' });
+      const d = await r.json();
+      showUpdate((d.ok ? '✓ phone updated' : '✗ phone update failed') +
+                 '<pre class="terminal-static" style="max-height:14em">' +
+                 (d.output || '').replace(/[<&]/g, c => ({'<':'&lt;','&':'&amp;'}[c])) + '</pre>',
+                 d.ok ? 12000 : 0);
+    } catch (e) { showUpdate('✗ error: ' + e.message, 0); }
+  };
+
   // Show pivot action results compactly
   document.body.addEventListener('htmx:afterRequest', (e) => {
     const cfg = e.detail.requestConfig || {};
