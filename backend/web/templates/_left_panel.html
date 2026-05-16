@@ -1,0 +1,101 @@
+<h3 class="sidebar-title">Pivot</h3>
+<div class="status-card compact">
+  <div class="status-row">
+    <span class="status-label">Tunnel</span>
+    {% if tunnel_up %}
+      <span class="status-pill up">UP</span>
+    {% else %}
+      <span class="status-pill down">DOWN</span>
+    {% endif %}
+  </div>
+  <div class="status-row">
+    <span class="status-label">Egress via pivot</span>
+    <span class="status-value">{{ egress_pivot or '—' }}</span>
+  </div>
+  <div class="status-row">
+    <span class="status-label">Kadx direct</span>
+    <span class="status-value">{{ egress_direct or '—' }}</span>
+  </div>
+</div>
+
+<div class="pivot-controls">
+  {% if tunnel_up %}
+    <button class="btn-sm warn"   hx-post="/api/pivot/release" hx-confirm="Kill autossh on phone?"
+            hx-swap="none">Release</button>
+    <button class="btn-sm"        hx-post="/api/pivot/reset"   hx-confirm="Kill + relaunch autossh on phone?"
+            hx-swap="none">Reset</button>
+    <button class="btn-sm danger" hx-post="/api/pivot/restart" hx-confirm="Kill microsocks + autossh, then restart?"
+            hx-swap="none">Restart</button>
+  {% else %}
+    <button class="btn"          hx-post="/api/pivot/start" hx-target="#start-result" hx-swap="innerHTML"
+            hx-disabled-elt="this">Start (via SSH to phone)</button>
+    <button class="btn-outline"  onclick="showStartCommand()">Show command for phone</button>
+  {% endif %}
+</div>
+<div id="start-result" class="hint" style="margin-top:0.5em"></div>
+<pre id="start-command" class="terminal small" style="display:none">
+~/portable-pivot/frontend/pivot-up.sh
+</pre>
+
+<h3 class="sidebar-title">Fold 6</h3>
+<div class="status-card compact">
+  {% if phone.reachable %}
+    {% if phone.connection == 'wifi' %}
+    <div class="status-row">
+      <span class="status-label">Connection</span>
+      <span class="status-pill info">Wi-Fi</span>
+    </div>
+    <div class="status-row">
+      <span class="status-label">SSID</span>
+      <span class="status-value">{{ phone.ssid or '<unknown>' }}</span>
+    </div>
+    <div class="status-row">
+      <span class="status-label">Phone IP</span>
+      <span class="status-value">{{ phone.ip or '—' }}</span>
+    </div>
+    {% if phone.frequency_mhz %}
+    <div class="status-row">
+      <span class="status-label">Band</span>
+      <span class="status-value">{{ phone.frequency_mhz }} MHz @ {{ phone.link_speed_mbps or '?' }} Mbps</span>
+    </div>
+    {% endif %}
+    {% if phone.rssi %}
+    <div class="status-row">
+      <span class="status-label">Signal</span>
+      <span class="status-value">{{ phone.rssi }} dBm</span>
+    </div>
+    {% endif %}
+    {% elif phone.connection == 'cellular' %}
+    <div class="status-row">
+      <span class="status-label">Connection</span>
+      <span class="status-pill info">Cellular</span>
+    </div>
+    <div class="status-row">
+      <span class="status-label">Network type</span>
+      <span class="status-value">{{ phone.cellular_network_type or '—' }}</span>
+    </div>
+    {% else %}
+    <div class="status-row">
+      <span class="status-label">Connection</span>
+      <span class="status-value">{{ phone.connection }}</span>
+    </div>
+    {% endif %}
+  {% else %}
+    <div class="status-row">
+      <span class="status-label">Connection</span>
+      <span class="status-pill down">UNREACHABLE</span>
+    </div>
+    {% if phone.raw_error %}
+    <div class="hint small">{{ phone.raw_error }}</div>
+    {% endif %}
+  {% endif %}
+</div>
+
+<div class="hint small">Auto-refreshes every 12s.</div>
+
+<script>
+function showStartCommand() {
+  const el = document.getElementById('start-command');
+  el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+}
+</script>

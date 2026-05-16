@@ -30,6 +30,9 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Plai
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+# local helper
+import phone as phone_mod
+
 # ---- paths -----------------------------------------------------------------
 HOME = Path(os.environ.get("HOME", "/home/kadx"))
 REPO_ROOT = Path(__file__).resolve().parents[2]          # .../portable-pivot
@@ -348,3 +351,61 @@ async def log_view(request: Request, path: str):
 @app.get("/healthz", response_class=PlainTextResponse)
 async def healthz():
     return "ok"
+
+
+# --- new: phone state & pivot control endpoints --------------------------
+
+@app.get("/api/phone_info")
+async def api_phone_info(force: int = 0):
+    return phone_mod.phone_info(force=bool(force))
+
+
+@app.get("/api/left_panel", response_class=HTMLResponse)
+async def api_left_panel(request: Request):
+    info = phone_mod.phone_info()
+    return templates.TemplateResponse(request, "_left_panel.html", {
+        "tunnel_up": pivot_tunnel_up(),
+        "phone": info,
+        "egress_pivot": pivot_egress_ip() if pivot_tunnel_up() else None,
+        "egress_direct": kadx_direct_ip(),
+    })
+
+
+@app.get("/api/right_panel", response_class=HTMLResponse)
+async def api_right_panel(request: Request):
+    return templates.TemplateResponse(request, "_right_panel.html", {
+        "recent": recent_scans(15),
+    })
+
+
+@app.post("/api/pivot/release")
+async def api_pivot_release():
+    return phone_mod.pivot_release()
+
+
+@app.post("/api/pivot/reset")
+async def api_pivot_reset():
+    return phone_mod.pivot_reset()
+
+
+@app.post("/api/pivot/restart")
+async def api_pivot_restart():
+    return phone_mod.pivot_restart_full()
+
+
+@app.post("/api/pivot/start")
+async def api_pivot_start():
+    """Auto-start: SSH to phone and bring up the pivot. Returns the start command
+    as a fallback if we can't reach the phone."""
+    if phone_mod.can_ssh_phone():
+        return phone_mod.pivot_reset()
+    return {
+        "ok": False,
+        "fallback_command": "~/portable-pivot/frontend/pivot-up.sh",
+        "output": "Can't SSH to phone. Run the command on the phone in Termux.",
+    }
+
+
+@app.get("/api/pivot/start_command", response_class=PlainTextResponse)
+async def api_pivot_start_command():
+    return "~/portable-pivot/frontend/pivot-up.sh"

@@ -1,0 +1,14 @@
+<h3 class="sidebar-title">Recent logs</h3>
+<ul class="log-list">
+  {% for r in recent %}
+  <li>
+    <a href="/logs/view?path={{ r.path }}" title="{{ r.path }}">
+      <span class="log-when">{{ r.mtime }}</span>
+      <span class="log-name">{{ r.name }}</span>
+    </a>
+  </li>
+  {% else %}
+  <li class="hint">No scans yet.</li>
+  {% endfor %}
+</ul>
+<p><a href="/logs" class="btn-sm">All logs →</a></p>

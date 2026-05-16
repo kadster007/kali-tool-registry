@@ -16,12 +16,36 @@
     <a class="{% if page=='tools' %}active{% endif %}" href="/tools">Tools</a>
     <a class="{% if page=='logs' %}active{% endif %}" href="/logs">Logs</a>
   </nav>
+  <div class="nav-right">
+    <button class="icon-btn" id="toggle-left" title="Toggle left panel">⬅</button>
+    <button class="icon-btn" id="toggle-right" title="Toggle right panel">➡</button>
+  </div>
 </header>
-<main>
-{% block content %}{% endblock %}
-</main>
-<footer>
-  <small>ShadowOps · pivot via Fold 6 · runs on kadx</small>
-</footer>
+
+<div class="layout" id="layout">
+  <!-- LEFT SIDEBAR: pivot + phone state -->
+  <aside class="sidebar left" id="sidebar-left"
+         hx-get="/api/left_panel" hx-trigger="load, every 12s" hx-swap="innerHTML">
+    <div class="sidebar-loading">Loading pivot state…</div>
+  </aside>
+
+  <div class="resizer" id="resizer-left" data-side="left"></div>
+
+  <main class="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <div class="resizer" id="resizer-right" data-side="right"></div>
+
+  <!-- RIGHT SIDEBAR: live logs -->
+  <aside class="sidebar right" id="sidebar-right"
+         hx-get="/api/right_panel" hx-trigger="load, every 15s" hx-swap="innerHTML">
+    <div class="sidebar-loading">Loading logs…</div>
+  </aside>
+</div>
+
+<footer><small>ShadowOps · pivot via Fold 6 · runs on kadx</small></footer>
+
+<script src="/static/sidebar.js"></script>
 </body>
 </html>
