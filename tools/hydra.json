@@ -10,51 +10,95 @@
     {
       "id": "ssh-brute",
       "name": "SSH Brute Force",
-      "icon": "🔑",
+      "icon": "\ud83d\udd11",
       "description": "Test SSH credentials from wordlist.",
-      "command": "hydra -L {userlist} -P {passlist} ssh://{target} -t 4 -V",
+      "command": "pivot hydra -L {userlist} -P {passlist} ssh://{target} -t 4 -V",
       "requires_root": false,
-      "params": ["target", "userlist", "passlist"],
-      "param_defaults": {"userlist": "/usr/share/wordlists/metasploit/unix_users.txt", "passlist": "/usr/share/wordlists/rockyou.txt"},
+      "params": [
+        "target",
+        "userlist",
+        "passlist"
+      ],
+      "param_defaults": {
+        "userlist": "/usr/share/wordlists/metasploit/unix_users.txt",
+        "passlist": "/usr/share/wordlists/rockyou.txt"
+      },
       "expected_duration": "slow"
     },
     {
       "id": "smb-brute",
       "name": "SMB Brute Force",
-      "icon": "🗂",
+      "icon": "\ud83d\uddc2",
       "description": "Test SMB/Windows credentials.",
-      "command": "hydra -L {userlist} -P {passlist} smb://{target} -V",
+      "command": "pivot hydra -L {userlist} -P {passlist} smb://{target} -V",
       "requires_root": false,
-      "params": ["target", "userlist", "passlist"],
+      "params": [
+        "target",
+        "userlist",
+        "passlist"
+      ],
       "expected_duration": "slow"
     },
     {
       "id": "single-user",
       "name": "Single User Test",
-      "icon": "🎯",
+      "icon": "\ud83c\udfaf",
       "description": "Test one username against a password list.",
-      "command": "hydra -l {username} -P {passlist} {protocol}://{target} -t 4 -V",
+      "command": "pivot hydra -l {username} -P {passlist} {protocol}://{target} -t 4 -V",
       "requires_root": false,
-      "params": ["target", "username", "passlist", "protocol"],
-      "param_defaults": {"protocol": "ssh", "passlist": "/usr/share/wordlists/rockyou.txt"},
+      "params": [
+        "target",
+        "username",
+        "passlist",
+        "protocol"
+      ],
+      "param_defaults": {
+        "protocol": "ssh",
+        "passlist": "/usr/share/wordlists/rockyou.txt"
+      },
       "expected_duration": "slow"
     },
     {
       "id": "http-form",
       "name": "HTTP Form Login",
-      "icon": "🌐",
+      "icon": "\ud83c\udf10",
       "description": "Brute force a web login form.",
-      "command": "hydra -L {userlist} -P {passlist} {target} http-post-form \"{path}:{post_data}:F={fail_string}\" -V",
+      "command": "pivot hydra -L {userlist} -P {passlist} {target} http-post-form \"{path}:{post_data}:F={fail_string}\" -V",
       "requires_root": false,
-      "params": ["target", "userlist", "passlist", "path", "post_data", "fail_string"],
-      "param_defaults": {"path": "/login", "post_data": "username=^USER^&password=^PASS^", "fail_string": "Invalid"},
+      "params": [
+        "target",
+        "userlist",
+        "passlist",
+        "path",
+        "post_data",
+        "fail_string"
+      ],
+      "param_defaults": {
+        "path": "/login",
+        "post_data": "username=^USER^&password=^PASS^",
+        "fail_string": "Invalid"
+      },
       "expected_duration": "slow"
     }
   ],
   "supported_protocols": [
-    "ssh", "ftp", "http", "https", "smb", "rdp", "vnc",
-    "telnet", "mysql", "mssql", "postgres", "smtp", "pop3", "imap",
-    "http-get", "http-post-form", "https-post-form"
+    "ssh",
+    "ftp",
+    "http",
+    "https",
+    "smb",
+    "rdp",
+    "vnc",
+    "telnet",
+    "mysql",
+    "mssql",
+    "postgres",
+    "smtp",
+    "pop3",
+    "imap",
+    "http-get",
+    "http-post-form",
+    "https-post-form"
   ],
   "flags": {
     "login": {
@@ -86,7 +130,7 @@
       "label": "Threads (-t)",
       "flag": "-t",
       "default": "4",
-      "placeholder": "4 (safe) — max 64"
+      "placeholder": "4 (safe) \u2014 max 64"
     },
     "port": {
       "type": "string",
@@ -122,13 +166,22 @@
   "notes": [
     "ONLY use on systems you have explicit authorization to test",
     "Use usernames discovered by enum4linux/smbmap to target specific accounts",
-    "Low thread count (-t 4) avoids account lockout — check target's lockout policy first",
+    "Low thread count (-t 4) avoids account lockout \u2014 check target's lockout policy first",
     "rockyou.txt must be unzipped first: sudo gunzip /usr/share/wordlists/rockyou.txt.gz",
     "^USER^ and ^PASS^ are hydra placeholders in HTTP form strings"
   ],
   "examples": [
-    {"desc": "SSH with found users", "cmd": "hydra -L users.txt -P /usr/share/wordlists/rockyou.txt ssh://192.168.1.10 -t 4"},
-    {"desc": "Single user SSH", "cmd": "hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://192.168.1.10"},
-    {"desc": "FTP brute force", "cmd": "hydra -L users.txt -P passwords.txt ftp://192.168.1.10 -V"}
+    {
+      "desc": "SSH with found users",
+      "cmd": "hydra -L users.txt -P /usr/share/wordlists/rockyou.txt ssh://192.168.1.10 -t 4"
+    },
+    {
+      "desc": "Single user SSH",
+      "cmd": "hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://192.168.1.10"
+    },
+    {
+      "desc": "FTP brute force",
+      "cmd": "hydra -L users.txt -P passwords.txt ftp://192.168.1.10 -V"
+    }
   ]
 }

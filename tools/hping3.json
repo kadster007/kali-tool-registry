@@ -9,45 +9,66 @@
     {
       "id": "ping-sweep",
       "name": "ICMP Ping",
-      "icon": "📡",
-      "description": "ICMP echo — like ping but more control.",
+      "icon": "\ud83d\udce1",
+      "description": "ICMP echo \u2014 like ping but more control.",
       "command": "sudo hping3 -1 -c 4 {target}",
       "requires_root": true,
-      "params": ["target"],
-      "expected_duration": "fast"
+      "params": [
+        "target"
+      ],
+      "expected_duration": "fast",
+      "runs_on": "phone"
     },
     {
       "id": "syn-scan",
       "name": "SYN Port Probe",
-      "icon": "🔍",
+      "icon": "\ud83d\udd0d",
       "description": "Send SYN to a port, check if open/filtered.",
       "command": "sudo hping3 -S -p {port} -c 3 {target}",
       "requires_root": true,
-      "params": ["target", "port"],
-      "param_defaults": {"port": "80"},
-      "expected_duration": "fast"
+      "params": [
+        "target",
+        "port"
+      ],
+      "param_defaults": {
+        "port": "80"
+      },
+      "expected_duration": "fast",
+      "runs_on": "phone"
     },
     {
       "id": "port-scan",
       "name": "Sequential Port Scan",
-      "icon": "🚪",
+      "icon": "\ud83d\udeaa",
       "description": "Scan a range of ports sequentially.",
       "command": "sudo hping3 -S --scan {port_range} {target}",
       "requires_root": true,
-      "params": ["target", "port_range"],
-      "param_defaults": {"port_range": "1-1000"},
-      "expected_duration": "medium"
+      "params": [
+        "target",
+        "port_range"
+      ],
+      "param_defaults": {
+        "port_range": "1-1000"
+      },
+      "expected_duration": "medium",
+      "runs_on": "phone"
     },
     {
       "id": "traceroute",
       "name": "TCP Traceroute",
-      "icon": "🗺",
+      "icon": "\ud83d\uddfa",
       "description": "Traceroute using TCP SYN (bypasses some firewalls).",
       "command": "sudo hping3 -S -T -p {port} {target}",
       "requires_root": true,
-      "params": ["target", "port"],
-      "param_defaults": {"port": "80"},
-      "expected_duration": "medium"
+      "params": [
+        "target",
+        "port"
+      ],
+      "param_defaults": {
+        "port": "80"
+      },
+      "expected_duration": "medium",
+      "runs_on": "phone"
     }
   ],
   "flags": {
@@ -55,11 +76,26 @@
       "type": "select",
       "label": "Packet Mode",
       "options": [
-        {"value": "-1", "label": "ICMP"},
-        {"value": "-2", "label": "UDP"},
-        {"value": "-S", "label": "TCP SYN"},
-        {"value": "-A", "label": "TCP ACK"},
-        {"value": "-F", "label": "TCP FIN"}
+        {
+          "value": "-1",
+          "label": "ICMP"
+        },
+        {
+          "value": "-2",
+          "label": "UDP"
+        },
+        {
+          "value": "-S",
+          "label": "TCP SYN"
+        },
+        {
+          "value": "-A",
+          "label": "TCP ACK"
+        },
+        {
+          "value": "-F",
+          "label": "TCP FIN"
+        }
       ]
     },
     "port": {
@@ -95,13 +131,23 @@
   },
   "notes": [
     "Always requires root/sudo",
-    "Useful for testing firewall rules — SYN vs ACK scan comparison reveals stateful filtering",
+    "Useful for testing firewall rules \u2014 SYN vs ACK scan comparison reveals stateful filtering",
     "--scan mode is cleaner than looping for port ranges",
-    "Lower level than nmap — use for specific packet crafting needs"
+    "Lower level than nmap \u2014 use for specific packet crafting needs"
   ],
   "examples": [
-    {"desc": "ICMP ping test", "cmd": "sudo hping3 -1 -c 4 192.168.1.1"},
-    {"desc": "Check if port 80 open", "cmd": "sudo hping3 -S -p 80 -c 3 192.168.1.1"},
-    {"desc": "Scan ports 1-100", "cmd": "sudo hping3 -S --scan 1-100 192.168.1.1"}
-  ]
+    {
+      "desc": "ICMP ping test",
+      "cmd": "sudo hping3 -1 -c 4 192.168.1.1"
+    },
+    {
+      "desc": "Check if port 80 open",
+      "cmd": "sudo hping3 -S -p 80 -c 3 192.168.1.1"
+    },
+    {
+      "desc": "Scan ports 1-100",
+      "cmd": "sudo hping3 -S --scan 1-100 192.168.1.1"
+    }
+  ],
+  "default_runs_on": "phone"
 }

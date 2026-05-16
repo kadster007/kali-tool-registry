@@ -9,40 +9,53 @@
     {
       "id": "subnet-scan",
       "name": "Scan Subnet",
-      "icon": "🏢",
+      "icon": "\ud83c\udfe2",
       "description": "Find all Windows/NetBIOS devices on LAN.",
       "command": "nbtscan -v {target}",
       "requires_root": false,
-      "params": ["target"],
-      "param_defaults": {"target": "192.168.1.0/24"},
-      "expected_duration": "fast"
+      "params": [
+        "target"
+      ],
+      "param_defaults": {
+        "target": "192.168.1.0/24"
+      },
+      "expected_duration": "fast",
+      "runs_on": "phone"
     },
     {
       "id": "single-host",
       "name": "Single Host",
-      "icon": "🖥",
+      "icon": "\ud83d\udda5",
       "description": "Verbose NetBIOS info from one host.",
       "command": "nbtscan -v {target}",
       "requires_root": false,
-      "params": ["target"],
-      "expected_duration": "fast"
+      "params": [
+        "target"
+      ],
+      "expected_duration": "fast",
+      "runs_on": "phone"
     },
     {
       "id": "hosts-format",
       "name": "Hosts File Format",
-      "icon": "📄",
+      "icon": "\ud83d\udcc4",
       "description": "Output in /etc/hosts compatible format.",
       "command": "nbtscan -e {target}",
       "requires_root": false,
-      "params": ["target"],
-      "param_defaults": {"target": "192.168.1.0/24"},
-      "expected_duration": "fast"
+      "params": [
+        "target"
+      ],
+      "param_defaults": {
+        "target": "192.168.1.0/24"
+      },
+      "expected_duration": "fast",
+      "runs_on": "phone"
     }
   ],
   "flags": {
     "verbose": {
       "type": "boolean",
-      "label": "Verbose — all names (-v)",
+      "label": "Verbose \u2014 all names (-v)",
       "flag": "-v",
       "default": true
     },
@@ -66,14 +79,24 @@
     }
   },
   "notes": [
-    "UDP port 137 — may be blocked by Windows firewall on newer systems",
+    "UDP port 137 \u2014 may be blocked by Windows firewall on newer systems",
     "Reveals computer name, workgroup/domain, and MAC address",
     "Still works on older Windows and embedded Windows systems (printers, cameras)",
     "Combine with arp-scan for comprehensive LAN device identification"
   ],
   "examples": [
-    {"desc": "Scan LAN for Windows", "cmd": "nbtscan -v 192.168.1.0/24"},
-    {"desc": "Single host", "cmd": "nbtscan -v 192.168.1.10"},
-    {"desc": "Hosts format", "cmd": "nbtscan -e 192.168.1.0/24"}
-  ]
+    {
+      "desc": "Scan LAN for Windows",
+      "cmd": "nbtscan -v 192.168.1.0/24"
+    },
+    {
+      "desc": "Single host",
+      "cmd": "nbtscan -v 192.168.1.10"
+    },
+    {
+      "desc": "Hosts format",
+      "cmd": "nbtscan -e 192.168.1.0/24"
+    }
+  ],
+  "default_runs_on": "phone"
 }

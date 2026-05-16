@@ -27,11 +27,11 @@
             <div class="tool-actions">
               {% set presets = t.presets or [] %}
               {% for p in presets[:3] %}
-                <button class="btn-xs"
+                <button class="btn-xs {% if p.runs_on=='phone' %}phone{% endif %}"
                         data-preset='{{ p|tojson }}'
-                        title="{{ p.description or '' }}{% if p.expected_duration %} · {{ p.expected_duration }}{% endif %}{% if p.requires_root %} · sudo{% endif %}"
+                        title="{{ p.description or '' }}{% if p.expected_duration %} · {{ p.expected_duration }}{% endif %}{% if p.runs_on=='phone' %} · runs on phone{% endif %}{% if p.requires_root %} · sudo{% endif %}"
                         onclick="shadowops.runPreset(JSON.parse(this.dataset.preset))">
-                  {% if p.icon %}{{ p.icon }} {% endif %}{{ p.name|truncate(18) }}
+                  {% if p.icon %}{{ p.icon }} {% endif %}{% if p.runs_on=='phone' %}📱 {% endif %}{{ p.name|truncate(18) }}
                 </button>
               {% endfor %}
               <a class="btn-xs outline" href="/tools/{{ t._id }}">⋯</a>

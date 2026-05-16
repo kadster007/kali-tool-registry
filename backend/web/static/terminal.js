@@ -105,7 +105,18 @@ window.shadowops = window.shadowops || {};
     if (preset.requires_root && !/^\s*sudo\s/.test(cmd)) {
       cmd = 'sudo ' + cmd;
     }
-    sendCmd(cmd);
+
+    // Where should it run? If the preset declares runs_on='phone', we need to
+    // be in the phone shell (SSH'd via the -R 8022 tunnel). Otherwise kadx.
+    const wantedMode = (preset.runs_on === 'phone') ? 'phone' : 'local';
+    if (currentMode !== wantedMode) {
+      // Switch terminal mode then run; small delay so the new shell prompt
+      // is ready to accept input.
+      connect(wantedMode);
+      setTimeout(() => sendCmd(cmd), 900);
+    } else {
+      sendCmd(cmd);
+    }
   };
 
   function extractTokens(s) {

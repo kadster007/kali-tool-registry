@@ -207,6 +207,8 @@ footer { text-align: center; color: var(--muted); padding: 0.3rem; font-size: 0.
 .btn-sm      { background: var(--panel-2); color: var(--fg); border-color: var(--border); padding: 0.3rem 0.6rem; font-size: 0.78rem; }
 .btn-xs      { background: var(--panel-3); color: var(--fg); border-color: var(--border); padding: 0.15rem 0.4rem; font-size: 0.72rem; }
 .btn-xs.outline { background: transparent; }
+.btn-xs.phone { background: rgba(126, 231, 135, 0.15); border-color: var(--info); color: var(--info); }
+.btn-xs.phone:hover { background: rgba(126, 231, 135, 0.25); }
 .btn-sm.warn   { background: rgba(210,153,34,.2); color: var(--warn); border-color: var(--warn); }
 .btn-sm.danger { background: rgba(248,81,73,.15); color: var(--bad); border-color: var(--bad); }
 .hint  { color: var(--muted); font-size: 0.83rem; }

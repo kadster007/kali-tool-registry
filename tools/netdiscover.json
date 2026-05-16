@@ -2,41 +2,52 @@
   "name": "netdiscover",
   "binary": "netdiscover",
   "category": "network-discovery",
-  "description": "Active/passive ARP reconnaissance. Identifies live hosts on LAN including their MAC address and vendor. Works without a target — auto-scans common LAN ranges.",
+  "description": "Active/passive ARP reconnaissance. Identifies live hosts on LAN including their MAC address and vendor. Works without a target \u2014 auto-scans common LAN ranges.",
   "requires_root": true,
   "lan_scope": true,
   "presets": [
     {
       "id": "auto-scan",
       "name": "Auto Scan",
-      "icon": "🔎",
+      "icon": "\ud83d\udd0e",
       "description": "Auto-detect and scan common LAN address ranges.",
       "command": "sudo netdiscover -f -P",
       "requires_root": true,
       "params": [],
-      "expected_duration": "medium"
+      "expected_duration": "medium",
+      "runs_on": "phone"
     },
     {
       "id": "range-scan",
       "name": "Subnet Scan",
-      "icon": "📡",
+      "icon": "\ud83d\udce1",
       "description": "Scan a specific subnet.",
       "command": "sudo netdiscover -r {target} -f -P",
       "requires_root": true,
-      "params": ["target"],
-      "param_defaults": {"target": "192.168.1.0/24"},
-      "expected_duration": "medium"
+      "params": [
+        "target"
+      ],
+      "param_defaults": {
+        "target": "192.168.1.0/24"
+      },
+      "expected_duration": "medium",
+      "runs_on": "phone"
     },
     {
       "id": "passive",
       "name": "Passive Listen",
-      "icon": "👂",
-      "description": "Passively sniff ARP traffic — no packets sent.",
+      "icon": "\ud83d\udc42",
+      "description": "Passively sniff ARP traffic \u2014 no packets sent.",
       "command": "sudo netdiscover -p -i {interface}",
       "requires_root": true,
-      "params": ["interface"],
-      "param_defaults": {"interface": "eth0"},
-      "expected_duration": "ongoing"
+      "params": [
+        "interface"
+      ],
+      "param_defaults": {
+        "interface": "eth0"
+      },
+      "expected_duration": "ongoing",
+      "runs_on": "phone"
     }
   ],
   "flags": {
@@ -71,14 +82,24 @@
     }
   },
   "notes": [
-    "Requires root — uses raw ARP packets",
+    "Requires root \u2014 uses raw ARP packets",
     "-P flag makes output machine-parseable (one line per host)",
     "-f fast mode skips sleep between requests",
     "Passive mode (-p) is completely silent but requires traffic on the network"
   ],
   "examples": [
-    {"desc": "Scan LAN automatically", "cmd": "sudo netdiscover -f -P"},
-    {"desc": "Scan specific subnet", "cmd": "sudo netdiscover -r 192.168.1.0/24 -P"},
-    {"desc": "Passive sniff on eth0", "cmd": "sudo netdiscover -p -i eth0"}
-  ]
+    {
+      "desc": "Scan LAN automatically",
+      "cmd": "sudo netdiscover -f -P"
+    },
+    {
+      "desc": "Scan specific subnet",
+      "cmd": "sudo netdiscover -r 192.168.1.0/24 -P"
+    },
+    {
+      "desc": "Passive sniff on eth0",
+      "cmd": "sudo netdiscover -p -i eth0"
+    }
+  ],
+  "default_runs_on": "phone"
 }
