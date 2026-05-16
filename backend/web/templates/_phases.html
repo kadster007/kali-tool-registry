@@ -28,10 +28,10 @@
               {% set presets = t.presets or [] %}
               {% for p in presets[:3] %}
                 <button class="btn-xs"
-                        data-cmd="{{ p.command }}"
-                        title="{{ p.description or '' }}"
-                        onclick="shadowops.runPreset(this.dataset.cmd)">
-                  {{ p.name|truncate(18) }}
+                        data-preset='{{ p|tojson }}'
+                        title="{{ p.description or '' }}{% if p.expected_duration %} · {{ p.expected_duration }}{% endif %}{% if p.requires_root %} · sudo{% endif %}"
+                        onclick="shadowops.runPreset(JSON.parse(this.dataset.preset))">
+                  {% if p.icon %}{{ p.icon }} {% endif %}{{ p.name|truncate(18) }}
                 </button>
               {% endfor %}
               <a class="btn-xs outline" href="/tools/{{ t._id }}">⋯</a>

@@ -48,6 +48,20 @@
 
   <div class="middle" id="middle">
     <main class="main" id="main">
+      <!-- Target widget: auto-fills preset variables. Pulls from /api/phone_info. -->
+      <section class="target-bar" id="target-bar">
+        <div class="target-fields">
+          <label>Target
+            <input id="target-input" type="text" placeholder="(loading from Fold 6…)" autocomplete="off" />
+          </label>
+          <label>Ports
+            <input id="ports-input" type="text" placeholder="(uses preset default)" autocomplete="off" />
+          </label>
+          <button class="btn-sm" id="target-from-phone" title="Refresh from Fold 6 (uses current Wi-Fi subnet)">↺ from Fold 6</button>
+        </div>
+        <div class="target-hint hint small" id="target-hint">Target auto-fills with phone's Wi-Fi subnet when the pivot is up.</div>
+      </section>
+
       {% block content %}{% endblock %}
     </main>
 
@@ -77,5 +91,6 @@
 
 <script src="/static/sidebar.js"></script>
 <script src="/static/terminal.js"></script>
+<script src="/static/target.js"></script>
 </body>
 </html>

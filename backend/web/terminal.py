@@ -25,25 +25,25 @@ HOME = Path(os.environ.get("HOME", "/home/kadx"))
 PHONE_KEY = HOME / ".ssh" / "id_ed25519_out"
 PHONE_USER = "u0_a559"
 PHONE_PORT = "8022"
-PHONE_TARGETS = ["192.168.1.197", "100.101.229.113"]
+# We always go through the autossh -R 8022 tunnel. If the tunnel is down,
+# phone mode shows a clear message; we never try to find the phone by IP.
+PHONE_HOST = "127.0.0.1"
 
 
 def _build_argv(cmd: str) -> List[str]:
     cmd = (cmd or "local").lower()
     if cmd == "phone":
-        # Find a reachable target by quick probe
+        # Sanity-check the tunnel listener; tell xterm clearly if it's down.
         import socket
-        chosen = None
-        for t in PHONE_TARGETS:
-            try:
-                with socket.create_connection((t, int(PHONE_PORT)), timeout=3):
-                    chosen = t
-                    break
-            except OSError:
-                continue
-        if not chosen:
-            # Return a shell that announces the failure to xterm
-            return ["/bin/sh", "-c", "echo 'phone unreachable on any known address'; exec /bin/bash"]
+        try:
+            with socket.create_connection((PHONE_HOST, int(PHONE_PORT)), timeout=2):
+                pass
+        except OSError:
+            return ["/bin/sh", "-c",
+                    "printf '\\e[31mPivot tunnel is DOWN.\\e[0m\\n"
+                    "Phone control rides the autossh tunnel (-R 8022).\\n"
+                    "Start the pivot on the phone first, then click \"SSH to phone\" again.\\n\\n'; "
+                    "exec /bin/bash -l"]
         return [
             "/usr/bin/ssh", "-tt",
             "-p", PHONE_PORT,
@@ -51,7 +51,7 @@ def _build_argv(cmd: str) -> List[str]:
             "-o", "StrictHostKeyChecking=accept-new",
             "-o", "UserKnownHostsFile=/dev/null",
             "-o", "ServerAliveInterval=20",
-            f"{PHONE_USER}@{chosen}",
+            f"{PHONE_USER}@{PHONE_HOST}",
         ]
     # Default — interactive bash on kadx
     return ["/usr/bin/env", "-i", f"HOME={HOME}", f"USER={os.environ.get('USER','kadx')}",

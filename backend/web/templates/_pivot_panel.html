@@ -1,6 +1,6 @@
 <div class="panel-header">
   <h3>Pivot</h3>
-  <button class="icon-btn-sm" title="Refresh"
+  <button class="icon-btn-sm" title="Re-check pivot"
           hx-get="/api/pivot_panel" hx-target="#pivot-panel" hx-swap="innerHTML">↻</button>
 </div>
 
@@ -12,14 +12,6 @@
     {% else %}
       <span class="status-pill down">DOWN</span>
     {% endif %}
-  </div>
-  <div class="status-row">
-    <span class="status-label">Egress via pivot</span>
-    <span class="status-value">{{ egress_pivot or '—' }}</span>
-  </div>
-  <div class="status-row">
-    <span class="status-label">Kadx direct</span>
-    <span class="status-value">{{ egress_direct or '—' }}</span>
   </div>
 </div>
 
@@ -34,10 +26,16 @@
   {% else %}
     <button class="btn"         hx-post="/api/pivot/start" hx-target="#pivot-action-result"
             hx-swap="innerHTML">Start pivot</button>
-    <button class="btn-outline" onclick="document.getElementById('pivot-start-cmd').style.display='block'">Show command</button>
+    <button class="btn-outline" onclick="document.getElementById('pivot-start-cmd').style.display='block'">Show cmd</button>
   {% endif %}
-  <button class="btn-sm" id="open-phone-shell">SSH to phone</button>
+  <button class="btn-sm" id="open-phone-shell" title="SSH to phone via the dedicated tunnel channel">SSH to phone</button>
 </div>
+
+<div class="pivot-controls" style="margin-top:0.3em">
+  <button class="btn-sm" hx-get="/api/diagnostic"
+          hx-target="#diag-result" hx-swap="innerHTML">Re-check pivot</button>
+</div>
+<div id="diag-result" class="diag-result"></div>
 <div id="pivot-action-result" class="hint small"></div>
 <pre id="pivot-start-cmd" class="terminal-static" style="display:none">
 ~/portable-pivot/frontend/pivot-up.sh

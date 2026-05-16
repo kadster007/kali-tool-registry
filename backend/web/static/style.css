@@ -242,6 +242,45 @@ ul.tool-list-sb { list-style: none; padding: 0; margin: 0.3rem 0; }
 .tool-name strong { font-size: 0.85rem; }
 .tool-actions { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.25rem; }
 
+/* --- Target widget ----------------------------------- */
+.target-bar {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+}
+.target-fields { display: flex; gap: 0.5rem; align-items: end; flex-wrap: wrap; }
+.target-fields label {
+  display: flex; flex-direction: column; gap: 0.15rem;
+  color: var(--muted); font-size: 0.78rem; flex: 1 1 180px;
+}
+.target-fields input {
+  background: var(--panel); border: 1px solid var(--border);
+  color: var(--fg); padding: 0.35rem 0.5rem; border-radius: 5px;
+  font-family: var(--mono); font-size: 0.85rem;
+}
+.target-bar .btn-sm { margin-bottom: 1px; }
+.target-hint { margin-top: 0.4rem; }
+
+/* --- Diagnostic card ----------------------------- */
+.diag-card {
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0.5rem 0.7rem; margin-top: 0.4rem;
+}
+.diag-card h4 { margin: 0 0 0.3em; font-size: 0.78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.diag-list { list-style: none; padding: 0; margin: 0; }
+.diag-item { display: flex; gap: 0.5rem; padding: 0.25rem 0; border-bottom: 1px dashed var(--border); }
+.diag-item:last-child { border-bottom: none; }
+.diag-mark { width: 1.1em; font-weight: 700; }
+.diag-item.ok   .diag-mark { color: var(--good); }
+.diag-item.fail .diag-mark { color: var(--bad); }
+.diag-text { flex: 1; min-width: 0; }
+.diag-name { font-size: 0.82rem; }
+.diag-detail { color: var(--muted); font-size: 0.72rem; word-break: break-word; }
+.diag-result { margin-top: 0.4em; }
+
 /* --- Forms (used on /scan, /tools) ---------------- */
 form.scan-form { display: flex; flex-direction: column; gap: 0.6rem; max-width: 520px; }
 form.scan-form label { display: flex; flex-direction: column; gap: 0.25rem; color: var(--muted); }

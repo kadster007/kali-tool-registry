@@ -430,12 +430,61 @@ async def api_pivot_panel(request: Request):
     try:
         return templates.TemplateResponse(request, "_pivot_panel.html", {
             "tunnel_up": pivot_tunnel_up(),
-            "egress_pivot": pivot_egress_ip() if pivot_tunnel_up() else None,
-            "egress_direct": kadx_direct_ip(),
         })
     except Exception as e:
         return templates.TemplateResponse(request, "_error_card.html",
             {"title": "Pivot", "msg": str(e), "retry": "/api/pivot_panel"})
+
+
+@app.get("/api/diagnostic", response_class=HTMLResponse)
+async def api_diagnostic(request: Request):
+    """Full-stack pivot health check, returns a small HTML fragment."""
+    import socket
+    results = []
+    def step(name, ok, detail=""):
+        results.append({"name": name, "ok": ok, "detail": detail})
+
+    # 1. SOCKS tunnel listener on kadx
+    socks_up = pivot_tunnel_up()
+    step("SOCKS tunnel (kadx:9050)", socks_up,
+         "listener present" if socks_up else "no -R 9050 from phone")
+
+    # 2. Phone-control tunnel listener on kadx
+    phone_ssh_up = False
+    try:
+        with socket.create_connection(("127.0.0.1", 8022), timeout=2):
+            phone_ssh_up = True
+    except OSError:
+        pass
+    step("Phone-control tunnel (kadx:8022)", phone_ssh_up,
+         "listener present — phone reachable via tunnel" if phone_ssh_up
+         else "no -R 8022 — restart pivot on phone to enable (needs new pivot-up.sh)")
+
+    # 3. SSH through tunnel
+    ssh_ok = phone_mod.can_ssh_phone() if phone_ssh_up else False
+    step("SSH kadx -> 127.0.0.1:8022 (phone sshd)", ssh_ok,
+         "auth + shell ok" if ssh_ok else ("can't connect" if not phone_ssh_up else "auth failed?"))
+
+    # 4. termux-wifi-connectioninfo via tunnel
+    wifi_ok = False
+    wifi_detail = ""
+    if ssh_ok:
+        info = phone_mod.phone_info(force=True)
+        wifi_ok = info.get("reachable") and info.get("ip") is not None
+        if wifi_ok:
+            wifi_detail = f"{info.get('connection')} · {info.get('ssid')} · {info.get('ip')}"
+        else:
+            wifi_detail = info.get("raw_error", "unknown")
+    step("Phone network info", wifi_ok, wifi_detail)
+
+    # 5. Curl through SOCKS pivot
+    pivot_egress = None
+    if socks_up:
+        pivot_egress = pivot_egress_ip()
+    step("Pivot egress (curl via SOCKS5)", bool(pivot_egress),
+         pivot_egress or "no response")
+
+    return templates.TemplateResponse(request, "_diagnostic.html", {"results": results})
 
 
 @app.get("/api/fold6_panel", response_class=HTMLResponse)

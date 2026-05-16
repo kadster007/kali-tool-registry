@@ -12,7 +12,8 @@ KADX_TARGETS=(
 KADX_PORT="2222"
 KADX_USER="kadx"
 KADX_KEY="$HOME/.ssh/id_ed25519"
-SOCKS_PORT="9050"
+SOCKS_PORT="9050"           # phone microsocks (the network-pivot SOCKS5)
+PHONE_SSHD_PORT="8022"      # phone Termux sshd (dedicated control channel)
 AUTOSSH_LOG="$HOME/.autossh.log"
 
 echo "==> wakelock"
@@ -74,4 +75,5 @@ exec env AUTOSSH_PORT=0 AUTOSSH_GATETIME=0 AUTOSSH_LOGFILE="$AUTOSSH_LOG" \
         -o ExitOnForwardFailure=no \
         -o TCPKeepAlive=yes \
         -R "$SOCKS_PORT:127.0.0.1:$SOCKS_PORT" \
+        -R "$PHONE_SSHD_PORT:127.0.0.1:$PHONE_SSHD_PORT" \
         "$KADX_USER@$PICKED"

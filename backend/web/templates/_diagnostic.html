@@ -1,0 +1,14 @@
+<div class="diag-card">
+  <h4>Diagnostic</h4>
+  <ul class="diag-list">
+    {% for r in results %}
+    <li class="diag-item {% if r.ok %}ok{% else %}fail{% endif %}">
+      <span class="diag-mark">{% if r.ok %}✓{% else %}✗{% endif %}</span>
+      <div class="diag-text">
+        <div class="diag-name">{{ r.name }}</div>
+        <div class="diag-detail">{{ r.detail }}</div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</div>

@@ -104,6 +104,7 @@ start_pivot() {
             -o ExitOnForwardFailure=no \
             -o TCPKeepAlive=yes \
             -R "$SOCKS_PORT:127.0.0.1:$SOCKS_PORT" \
+            -R "8022:127.0.0.1:8022" \
             "$KADX_USER@$PICKED" > /dev/null 2>&1 &
     disown
     sleep 2

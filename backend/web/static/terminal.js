@@ -70,17 +70,64 @@ window.shadowops = window.shadowops || {};
     document.getElementById('layout')?.classList.remove('term-collapsed');
   });
 
-  // Phase preset buttons type the command into the current shell
-  shadowops.runPreset = function (cmd) {
+  // ----- preset runner: accepts the preset object (or a raw command string)
+  // Substitutes {target}, {ports}, and other named params from:
+  //   1. The target/ports widget at top of main (user-editable)
+  //   2. preset.param_defaults
+  //   3. A prompt() if still missing.
+  shadowops.runPreset = function (preset) {
+    // Allow legacy callers that pass a string
+    if (typeof preset === 'string') {
+      sendCmd(preset);
+      return;
+    }
+    let cmd = preset.command || '';
+    const tInput = document.getElementById('target-input');
+    const pInput = document.getElementById('ports-input');
+    const widgetTarget = tInput && tInput.value.trim();
+    const widgetPorts  = pInput && pInput.value.trim();
+
+    const params = preset.params || extractTokens(cmd);
+    for (const p of params) {
+      let val = null;
+      if (p === 'target' && widgetTarget) val = widgetTarget;
+      else if (p === 'ports' && widgetPorts) val = widgetPorts;
+      else if (preset.param_defaults && p in preset.param_defaults) {
+        val = preset.param_defaults[p];
+      }
+      if (val == null || val === '') {
+        val = window.prompt(`Value for {${p}}?`, '');
+        if (val == null) return;  // cancelled
+      }
+      cmd = cmd.split(`{${p}}`).join(val);
+    }
+
+    if (preset.requires_root && !/^\s*sudo\s/.test(cmd)) {
+      cmd = 'sudo ' + cmd;
+    }
+    sendCmd(cmd);
+  };
+
+  function extractTokens(s) {
+    const out = []; const seen = new Set();
+    const re = /\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g;
+    let m;
+    while ((m = re.exec(s)) !== null) {
+      if (!seen.has(m[1])) { seen.add(m[1]); out.push(m[1]); }
+    }
+    return out;
+  }
+
+  function sendCmd(cmd) {
     if (!ws || ws.readyState !== 1) {
       connect('local');
-      // Wait for connection then send
-      setTimeout(() => shadowops.runPreset(cmd), 600);
+      setTimeout(() => sendCmd(cmd), 600);
       return;
     }
     ws.send(cmd + '\r');
     term.focus();
-  };
+  }
+  shadowops._sendCmd = sendCmd;
 
   // Refit on window/sidebar resize
   let fitTimer = null;
