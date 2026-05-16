@@ -14,8 +14,7 @@
       "command": "sudo arp-scan --localnet",
       "requires_root": true,
       "params": [],
-      "expected_duration": "fast",
-      "runs_on": "phone"
+      "expected_duration": "fast"
     },
     {
       "id": "subnet",
@@ -30,8 +29,7 @@
       "param_defaults": {
         "target": "192.168.1.0/24"
       },
-      "expected_duration": "fast",
-      "runs_on": "phone"
+      "expected_duration": "fast"
     },
     {
       "id": "duplicate-detect",
@@ -41,8 +39,7 @@
       "command": "sudo arp-scan --localnet --ignoredups=no",
       "requires_root": true,
       "params": [],
-      "expected_duration": "fast",
-      "runs_on": "phone"
+      "expected_duration": "fast"
     }
   ],
   "flags": {
@@ -95,6 +92,5 @@
       "desc": "Verbose output",
       "cmd": "sudo arp-scan --localnet --verbose"
     }
-  ],
-  "default_runs_on": "phone"
+  ]
 }

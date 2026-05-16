@@ -119,9 +119,9 @@ window.shadowops = window.shadowops || {};
       if (target) target.textContent = ok
         ? '✓ ' + (body?.output?.split('\n').slice(-3).join(' ').trim() || 'ok')
         : '⚠ ' + (body?.output || 'failed');
-      // Manually refresh just the pivot panel (no auto-refresh elsewhere)
-      htmx.ajax('GET', '/api/pivot_panel',
-                { target: '#pivot-panel', swap: 'innerHTML' });
+      // Manually refresh the consolidated status panel (no auto-refresh elsewhere)
+      htmx.ajax('GET', '/api/status_panel',
+                { target: '#status-panel', swap: 'innerHTML' });
     }
   });
 })();

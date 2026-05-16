@@ -16,8 +16,7 @@
       "params": [
         "target"
       ],
-      "expected_duration": "fast",
-      "runs_on": "phone"
+      "expected_duration": "fast"
     },
     {
       "id": "top-ports",
@@ -29,8 +28,7 @@
       "params": [
         "target"
       ],
-      "expected_duration": "fast",
-      "runs_on": "phone"
+      "expected_duration": "fast"
     },
     {
       "id": "full-sweep",
@@ -42,8 +40,7 @@
       "params": [
         "target"
       ],
-      "expected_duration": "medium",
-      "runs_on": "phone"
+      "expected_duration": "medium"
     }
   ],
   "flags": {
@@ -87,6 +84,5 @@
       "desc": "All ports on one host",
       "cmd": "sudo masscan 192.168.1.1 -p1-65535 --rate=1000"
     }
-  ],
-  "default_runs_on": "phone"
+  ]
 }

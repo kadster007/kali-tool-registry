@@ -442,13 +442,22 @@ async def api_phases_panel(request: Request):
 
 @app.get("/api/pivot_panel", response_class=HTMLResponse)
 async def api_pivot_panel(request: Request):
+    # Back-compat alias for older clients; the new consolidated panel is /api/status_panel
+    return await api_status_panel(request)
+
+
+@app.get("/api/status_panel", response_class=HTMLResponse)
+async def api_status_panel(request: Request):
+    """Consolidated Pivot + Fold 6 panel."""
     try:
-        return templates.TemplateResponse(request, "_pivot_panel.html", {
+        info = phone_mod.phone_info(force=False)
+        return templates.TemplateResponse(request, "_status_panel.html", {
             "tunnel_up": pivot_tunnel_up(),
+            "phone": info,
         })
     except Exception as e:
         return templates.TemplateResponse(request, "_error_card.html",
-            {"title": "Pivot", "msg": str(e), "retry": "/api/pivot_panel"})
+            {"title": "Status", "msg": str(e), "retry": "/api/status_panel"})
 
 
 @app.get("/api/diagnostic", response_class=HTMLResponse)

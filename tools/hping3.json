@@ -16,8 +16,7 @@
       "params": [
         "target"
       ],
-      "expected_duration": "fast",
-      "runs_on": "phone"
+      "expected_duration": "fast"
     },
     {
       "id": "syn-scan",
@@ -33,8 +32,7 @@
       "param_defaults": {
         "port": "80"
       },
-      "expected_duration": "fast",
-      "runs_on": "phone"
+      "expected_duration": "fast"
     },
     {
       "id": "port-scan",
@@ -50,8 +48,7 @@
       "param_defaults": {
         "port_range": "1-1000"
       },
-      "expected_duration": "medium",
-      "runs_on": "phone"
+      "expected_duration": "medium"
     },
     {
       "id": "traceroute",
@@ -67,8 +64,7 @@
       "param_defaults": {
         "port": "80"
       },
-      "expected_duration": "medium",
-      "runs_on": "phone"
+      "expected_duration": "medium"
     }
   ],
   "flags": {
@@ -148,6 +144,5 @@
       "desc": "Scan ports 1-100",
       "cmd": "sudo hping3 -S --scan 1-100 192.168.1.1"
     }
-  ],
-  "default_runs_on": "phone"
+  ]
 }

@@ -19,8 +19,7 @@
       "param_defaults": {
         "target": "192.168.1.0/24"
       },
-      "expected_duration": "fast",
-      "runs_on": "phone"
+      "expected_duration": "fast"
     },
     {
       "id": "alive-verbose",
@@ -35,8 +34,7 @@
       "param_defaults": {
         "target": "192.168.1.0/24"
       },
-      "expected_duration": "fast",
-      "runs_on": "phone"
+      "expected_duration": "fast"
     },
     {
       "id": "count-mode",
@@ -53,8 +51,7 @@
         "target": "192.168.1.0/24",
         "count": "3"
       },
-      "expected_duration": "fast",
-      "runs_on": "phone"
+      "expected_duration": "fast"
     }
   ],
   "flags": {
@@ -113,6 +110,5 @@
       "desc": "3 pings each",
       "cmd": "fping -c 3 -g 192.168.1.0/24"
     }
-  ],
-  "default_runs_on": "phone"
+  ]
 }

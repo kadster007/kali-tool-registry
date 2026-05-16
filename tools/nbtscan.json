@@ -19,8 +19,7 @@
       "param_defaults": {
         "target": "192.168.1.0/24"
       },
-      "expected_duration": "fast",
-      "runs_on": "phone"
+      "expected_duration": "fast"
     },
     {
       "id": "single-host",
@@ -32,8 +31,7 @@
       "params": [
         "target"
       ],
-      "expected_duration": "fast",
-      "runs_on": "phone"
+      "expected_duration": "fast"
     },
     {
       "id": "hosts-format",
@@ -48,8 +46,7 @@
       "param_defaults": {
         "target": "192.168.1.0/24"
       },
-      "expected_duration": "fast",
-      "runs_on": "phone"
+      "expected_duration": "fast"
     }
   ],
   "flags": {
@@ -97,6 +94,5 @@
       "desc": "Hosts format",
       "cmd": "nbtscan -e 192.168.1.0/24"
     }
-  ],
-  "default_runs_on": "phone"
+  ]
 }

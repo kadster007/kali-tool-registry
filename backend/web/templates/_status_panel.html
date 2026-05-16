@@ -1,22 +1,97 @@
-<div class="status-card">
+<div class="panel-header">
+  <h3>Status</h3>
+  <button class="icon-btn-sm" title="Refresh all"
+          hx-get="/api/status_panel" hx-target="#status-panel" hx-swap="innerHTML">↻</button>
+</div>
+
+<div class="status-card compact">
   <div class="status-row">
-    <span class="status-label">Pivot tunnel</span>
+    <span class="status-label">Pivot</span>
     {% if tunnel_up %}
       <span class="status-pill up">UP</span>
     {% else %}
       <span class="status-pill down">DOWN</span>
     {% endif %}
   </div>
-  <div class="status-row">
-    <span class="status-label">Fold 6</span>
-    <span class="status-value">{{ fold6_status or '—' }}</span>
-  </div>
-  <div class="status-row">
-    <span class="status-label">Phone egress (pivot)</span>
-    <span class="status-value">{{ egress_pivot or '—' }}</span>
-  </div>
-  <div class="status-row">
-    <span class="status-label">Kadx direct egress</span>
-    <span class="status-value">{{ egress_direct or '—' }}</span>
-  </div>
+
+  {% if phone.reachable %}
+    <div class="status-row">
+      <span class="status-label">Phone</span>
+      {% if phone.connection == 'wifi' %}
+        <span class="status-pill info">Wi-Fi</span>
+      {% elif phone.connection == 'cellular' %}
+        <span class="status-pill info">Cell</span>
+      {% else %}
+        <span class="status-pill warn">{{ phone.connection }}</span>
+      {% endif %}
+    </div>
+    {% if phone.ssid %}
+    <div class="status-row">
+      <span class="status-label">SSID</span>
+      <span class="status-value" title="{{ phone.ssid }}">{{ phone.ssid }}</span>
+    </div>
+    {% endif %}
+    {% if phone.ip %}
+    <div class="status-row">
+      <span class="status-label">IP / subnet</span>
+      <span class="status-value">{{ phone.ip }} <span class="hint small">→ {{ phone.subnet or '?' }}</span></span>
+    </div>
+    {% endif %}
+    {% if phone.rssi or phone.link_speed_mbps %}
+    <div class="status-row">
+      <span class="status-label">Signal</span>
+      <span class="status-value hint small">
+        {% if phone.rssi %}{{ phone.rssi }} dBm{% endif %}
+        {% if phone.link_speed_mbps %} · {{ phone.link_speed_mbps }} Mbps{% endif %}
+      </span>
+    </div>
+    {% endif %}
+  {% else %}
+    <div class="status-row">
+      <span class="status-label">Phone</span>
+      <span class="status-pill down">unreachable</span>
+    </div>
+    {% if phone.raw_error %}
+    <div class="hint small phone-err">{{ phone.raw_error }}</div>
+    {% endif %}
+  {% endif %}
 </div>
+
+<div class="pivot-controls">
+  {% if tunnel_up %}
+    <button class="btn-sm warn"   hx-post="/api/pivot/release" hx-confirm="Kill autossh on phone?"
+            hx-target="#pivot-action-result" hx-swap="innerHTML">Release</button>
+    <button class="btn-sm"        hx-post="/api/pivot/reset"   hx-confirm="Kill + relaunch autossh on phone?"
+            hx-target="#pivot-action-result" hx-swap="innerHTML">Reset</button>
+    <button class="btn-sm danger" hx-post="/api/pivot/restart" hx-confirm="Kill microsocks + autossh, then restart?"
+            hx-target="#pivot-action-result" hx-swap="innerHTML">Restart</button>
+  {% else %}
+    <button class="btn"         hx-post="/api/pivot/start" hx-target="#pivot-action-result"
+            hx-swap="innerHTML">Start</button>
+    <button class="btn-outline" onclick="document.getElementById('pivot-start-cmd').style.display='block'">Show cmd</button>
+  {% endif %}
+  <button class="btn-sm" id="open-phone-shell" title="SSH to phone via tunnel">SSH→phone</button>
+  <button class="btn-sm danger" hx-post="/api/pivot/kill_autossh"
+          hx-confirm="Kill autossh + microsocks on the phone?"
+          hx-target="#pivot-action-result" hx-swap="innerHTML"
+          title="Force-stop autossh on the phone (good for flapping tunnels)">Kill</button>
+</div>
+
+<div class="pivot-controls" style="margin-top:0.25em">
+  <button class="btn-sm" hx-get="/api/diagnostic"
+          hx-target="#diag-result" hx-swap="innerHTML">Re-check pivot</button>
+  <button class="btn-sm" hx-get="/api/fold6_panel?force=1" hx-target="#status-panel" hx-swap="innerHTML"
+          title="Force re-fetch Wi-Fi info from phone">↻ Wi-Fi</button>
+</div>
+
+<div id="diag-result" class="diag-result"></div>
+<div id="pivot-action-result" class="hint small"></div>
+<pre id="pivot-start-cmd" class="terminal-static" style="display:none">
+~/portable-pivot/frontend/pivot-up.sh
+</pre>
+
+{% if phone.reachable and (phone.ssid in ('<unknown ssid>', '<unknown>', None, '')) and phone.connection == 'wifi' %}
+<div class="hint small" style="margin-top:0.4em">
+  SSID hidden — enable <strong>Precise location</strong> for Termux:API in Android.
+</div>
+{% endif %}

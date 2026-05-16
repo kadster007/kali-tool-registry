@@ -14,8 +14,7 @@
       "command": "sudo netdiscover -f -P",
       "requires_root": true,
       "params": [],
-      "expected_duration": "medium",
-      "runs_on": "phone"
+      "expected_duration": "medium"
     },
     {
       "id": "range-scan",
@@ -30,8 +29,7 @@
       "param_defaults": {
         "target": "192.168.1.0/24"
       },
-      "expected_duration": "medium",
-      "runs_on": "phone"
+      "expected_duration": "medium"
     },
     {
       "id": "passive",
@@ -46,8 +44,7 @@
       "param_defaults": {
         "interface": "eth0"
       },
-      "expected_duration": "ongoing",
-      "runs_on": "phone"
+      "expected_duration": "ongoing"
     }
   ],
   "flags": {
@@ -100,6 +97,5 @@
       "desc": "Passive sniff on eth0",
       "cmd": "sudo netdiscover -p -i eth0"
     }
-  ],
-  "default_runs_on": "phone"
+  ]
 }

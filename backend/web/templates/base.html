@@ -29,14 +29,9 @@
   <!-- LEFT SIDEBAR: dashboard (pivot + fold6 + phases) -->
   <aside class="sidebar left" id="sidebar-left">
     <!-- Each panel loads independently; failures don't cascade -->
-    <section class="panel" id="pivot-panel"
-             hx-get="/api/pivot_panel" hx-trigger="load" hx-swap="innerHTML">
-      <div class="panel-loading">Loading pivot…</div>
-    </section>
-
-    <section class="panel" id="fold6-panel"
-             hx-get="/api/fold6_panel?force=0" hx-trigger="load" hx-swap="innerHTML">
-      <div class="panel-loading">Loading Fold 6…</div>
+    <section class="panel" id="status-panel"
+             hx-get="/api/status_panel" hx-trigger="load" hx-swap="innerHTML">
+      <div class="panel-loading">Loading status…</div>
     </section>
 
     <section class="panel" id="phases-panel"
