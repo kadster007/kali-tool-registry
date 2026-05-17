@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Files</h1>
+<p class="hint">Dual-pane browser. Left = kadx (~/), right = Fold 6 (Termux home, via tunnel).
+Click a folder to navigate in. Click a file to view (text only, ≤256 KB) or download.
+File transfers are direct via the tunnel — no web upload yet (coming).</p>
+
+<div class="filemgr">
+  <section class="fm-pane" id="pane-kadx" data-side="kadx">
+    <div class="fm-head">
+      <span class="fm-host">kadx</span>
+      <span class="fm-path" id="path-kadx">/home/kadx</span>
+      <button class="btn-xs" onclick="fm.reload('kadx')">↻</button>
+      <button class="btn-xs" onclick="fm.openTerm('kadx')" title="cd into this path in terminal">⌨ cd</button>
+    </div>
+    <ul class="fm-list" id="list-kadx"><li class="hint small">loading…</li></ul>
+  </section>
+
+  <section class="fm-pane" id="pane-phone" data-side="phone">
+    <div class="fm-head">
+      <span class="fm-host">phone</span>
+      <span class="fm-path" id="path-phone">{{ phone_root }}</span>
+      <button class="btn-xs" onclick="fm.reload('phone')">↻</button>
+      <button class="btn-xs" onclick="fm.openTerm('phone')" title="SSH to phone + cd">⌨ cd</button>
+    </div>
+    <ul class="fm-list" id="list-phone"><li class="hint small">loading…</li></ul>
+  </section>
+</div>
+
+<dialog id="fm-viewer">
+  <div class="fm-viewer-head">
+    <strong id="fm-viewer-path">file</strong>
+    <button class="btn-xs" onclick="document.getElementById('fm-viewer').close()">close</button>
+  </div>
+  <pre id="fm-viewer-body" class="terminal-static" style="max-height:60vh;overflow:auto"></pre>
+  <div class="fm-viewer-foot">
+    <a id="fm-viewer-dl" class="btn-sm" target="_blank">⬇ Download</a>
+  </div>
+</dialog>
+
+<script>
+const fm = (function () {
+  const state = { kadx: '/home/kadx', phone: {{ phone_root | tojson }} };
+
+  function fmt(b){ if(b==null) return ''; if(b<1024) return b+'B'; if(b<1048576) return (b/1024).toFixed(1)+'K'; return (b/1048576).toFixed(1)+'M'; }
+  function ts(s){ if(!s) return ''; const d=new Date(s*1000); return d.toLocaleString(); }
+
+  async function load(side, path) {
+    state[side] = path;
+    document.getElementById('path-'+side).textContent = path;
+    const list = document.getElementById('list-'+side);
+    list.innerHTML = '<li class="hint small">loading…</li>';
+    try {
+      const r = await fetch(`/api/files/${side}?path=${encodeURIComponent(path)}`);
+      const d = await r.json();
+      if (d.error) {
+        list.innerHTML = `<li class="hint small">error: ${d.error}</li>`;
+        return;
+      }
+      const rows = [];
+      if (d.parent && d.path !== d.root) {
+        rows.push(`<li class="fm-row dir" onclick="fm.load('${side}', ${JSON.stringify(d.parent)})">📁 <span class="fm-name">..</span></li>`);
+      }
+      for (const e of (d.entries || [])) {
+        const icon = e.type === 'dir' ? '📁' : (e.type === 'link' ? '🔗' : '📄');
+        const action = e.type === 'dir'
+          ? `fm.load('${side}', ${JSON.stringify(e.path)})`
+          : `fm.view('${side}', ${JSON.stringify(e.path)})`;
+        rows.push(`<li class="fm-row ${e.type}" onclick='${action}'>
+          ${icon} <span class="fm-name">${e.name}</span>
+          ${e.size != null ? `<span class="fm-size hint small">${fmt(e.size)}</span>` : ''}
+          ${e.mtime ? `<span class="fm-time hint small">${ts(e.mtime)}</span>` : ''}
+        </li>`);
+      }
+      list.innerHTML = rows.join('') || '<li class="hint small">(empty)</li>';
+    } catch (e) {
+      list.innerHTML = `<li class="hint small">fetch failed: ${e.message}</li>`;
+    }
+  }
+
+  async function view(side, path) {
+    try {
+      const r = await fetch(`/api/files/${side}/view?path=${encodeURIComponent(path)}`);
+      const d = await r.json();
+      const v = document.getElementById('fm-viewer');
+      document.getElementById('fm-viewer-path').textContent = path;
+      const dl = document.getElementById('fm-viewer-dl');
+      dl.href = `/api/files/${side}/download?path=${encodeURIComponent(path)}`;
+      dl.download = path.split('/').pop();
+      const body = document.getElementById('fm-viewer-body');
+      if (d.error) { body.textContent = `(${d.error}${d.size ? ' · '+d.size+'B' : ''})`; }
+      else body.textContent = d.content || '';
+      v.showModal();
+    } catch (e) {
+      alert('view failed: ' + e.message);
+    }
+  }
+
+  function openTerm(side) {
+    const path = state[side];
+    if (side === 'kadx') {
+      if (window.shadowops && window.shadowops._sendCmd) window.shadowops._sendCmd(`cd ${path}`);
+    } else {
+      // Switch terminal to phone and cd
+      const tp = document.getElementById('term-phone');
+      if (tp) tp.click();
+      setTimeout(() => {
+        if (window.shadowops && window.shadowops._sendCmd) window.shadowops._sendCmd(`cd ${path}`);
+      }, 900);
+    }
+  }
+
+  function reload(side) { load(side, state[side]); }
+
+  // Initial loads
+  load('kadx', state.kadx);
+  load('phone', state.phone);
+
+  return { load, view, reload, openTerm };
+})();
+</script>
+{% endblock %}

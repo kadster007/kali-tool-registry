@@ -49,6 +49,33 @@ a Go app.
 
 ---
 
+## Pi Zero 2 W as wireless-recon node (parked 2026-05-17)
+
+Phase 1 wireless attacks (aircrack-ng, kismet, wifite, hcxdumptool) need
+a USB Wi-Fi adapter in monitor mode + physical RF proximity. Android
+phones can't deliver this (chipset/driver locked).
+
+**Right slot for the Pi:** drop the Pi at the target site with a
+monitor-capable adapter, advertise its subnet via `tailscale set
+--advertise-routes=...`, then kadx tunnels through it for wireless
+recon. The Fold 6 stays out of the picture for this phase entirely.
+
+Adapters worth pairing with a Pi Zero 2W:
+- Alfa AWUS036ACH (ac dual-band)
+- Panda PAU09 (cheap, reliable for 2.4GHz)
+- Atheros AR9271 dongles (single-band, well-supported)
+
+Build steps when we decide to do this:
+- Flash Kali Linux ARM (Pi Zero 2W version)
+- Install Tailscale, join tailnet
+- `sudo tailscale set --advertise-routes=<target_subnet>/24 --advertise-exit-node`
+- Plug in monitor-capable USB Wi-Fi, verify `airmon-ng check`
+- From kadx: `pivot raw airodump-ng wlan1mon` (or run directly on Pi)
+
+Sibling concept of the Fold 6 pivot, not a replacement.
+
+---
+
 ## nmap-viewer (parked 2026-05-15, see ShadowOps Phase 2)
 
 `kadster007/nmap-viewer` (fork of `psyray/nmap-viewer`) — JavaScript SPA

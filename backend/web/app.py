@@ -37,6 +37,7 @@ import terminal as terminal_mod
 import notes as notes_mod
 import version as version_mod
 import scan as scan_mod
+import files as files_mod
 
 # ---- paths -----------------------------------------------------------------
 HOME = Path(os.environ.get("HOME", "/home/kadx"))
@@ -372,6 +373,65 @@ async def healthz():
 async def terminal_page(request: Request):
     """Full-screen terminal page (no sidebars). Same xterm.js + pty backend."""
     return templates.TemplateResponse(request, "terminal.html", {"page": "terminal"})
+
+
+@app.get("/files", response_class=HTMLResponse)
+async def files_page(request: Request):
+    return templates.TemplateResponse(request, "files.html", {
+        "page": "files",
+        "phone_root": files_mod.PHONE_ROOT,
+    })
+
+
+@app.get("/api/files/{side}")
+async def api_files_list(side: str, path: str = ""):
+    if side == "kadx":
+        return files_mod.list_kadx(path or str(files_mod.KADX_HOME))
+    elif side == "phone":
+        return files_mod.list_phone(path or files_mod.PHONE_ROOT)
+    return JSONResponse({"error": "unknown side"}, status_code=400)
+
+
+@app.get("/api/files/{side}/view")
+async def api_files_view(side: str, path: str):
+    if side == "kadx":
+        return files_mod.view_kadx_text(path)
+    elif side == "phone":
+        return files_mod.view_phone_text(path)
+    return JSONResponse({"error": "unknown side"}, status_code=400)
+
+
+@app.get("/api/files/{side}/download")
+async def api_files_download(side: str, path: str):
+    from fastapi.responses import FileResponse, StreamingResponse
+    if side == "kadx":
+        p, root = files_mod._safe_path("kadx", path)
+        if not p.exists() or not p.is_file():
+            return PlainTextResponse("not a file", status_code=404)
+        return FileResponse(p, filename=p.name)
+    elif side == "phone":
+        p, _root = files_mod._safe_path("phone", path)
+        target = str(p)
+        # Stream the file by SSH-cat'ing it back
+        proc = subprocess.Popen(
+            ["ssh", "-p", files_mod.PHONE_SSH_PORT, "-i", str(files_mod.SSH_KEY),
+             "-o", "StrictHostKeyChecking=accept-new",
+             "-o", "UserKnownHostsFile=/dev/null",
+             "-o", "BatchMode=yes",
+             f"{files_mod.PHONE_USER}@{files_mod.PHONE_SSH_HOST}", f"cat {target!r}"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        def gen():
+            while True:
+                chunk = proc.stdout.read(64 * 1024)
+                if not chunk:
+                    proc.wait()
+                    return
+                yield chunk
+        from urllib.parse import quote
+        return StreamingResponse(gen(), media_type="application/octet-stream",
+                                 headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(p.name)}"})
+    return PlainTextResponse("unknown side", status_code=400)
 
 
 @app.get("/api/right_host_panel", response_class=HTMLResponse)

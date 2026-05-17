@@ -549,6 +549,60 @@ tr.port-closed { opacity: 0.55; }
 }
 .phase-summary-link:hover { background: rgba(126,231,135,.18); }
 
+/* --- File manager (dual-pane) ---------------------- */
+.filemgr {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+@media (max-width: 800px) { .filemgr { grid-template-columns: 1fr; } }
+.fm-pane {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-height: 50vh;
+  display: flex; flex-direction: column;
+}
+.fm-head {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--border);
+  border-radius: 8px 8px 0 0;
+}
+.fm-host { font-weight: 600; color: var(--accent); }
+.fm-path {
+  flex: 1; font-family: var(--mono); font-size: 0.78rem;
+  color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fm-list {
+  list-style: none; padding: 0; margin: 0;
+  overflow-y: auto; flex: 1;
+  font-size: 0.85rem;
+}
+.fm-row {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px dashed var(--border);
+  cursor: pointer;
+}
+.fm-row:hover { background: var(--panel-2); }
+.fm-row.dir .fm-name { color: var(--accent); font-weight: 500; }
+.fm-row.file .fm-name { color: var(--fg); }
+.fm-row.link .fm-name { color: var(--warn); }
+.fm-name { flex: 1; font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm-size, .fm-time { color: var(--muted); font-size: 0.7rem; font-family: var(--mono); }
+
+#fm-viewer {
+  background: var(--panel); color: var(--fg);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 0.7rem 0.8rem; max-width: 90vw; width: 760px;
+}
+#fm-viewer::backdrop { background: rgba(0,0,0,0.55); }
+.fm-viewer-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; }
+.fm-viewer-foot { margin-top: 0.5rem; }
+
 /* --- Notes page --------------------------------------- */
 .notes-form { display: flex; flex-direction: column; gap: 0.5rem; max-width: 720px; }
 .notes-form label { display: flex; flex-direction: column; gap: 0.2rem; color: var(--muted); font-size: 0.85rem; }
