@@ -234,6 +234,33 @@ footer { text-align: center; color: var(--muted); padding: 0.3rem; font-size: 0.
 .btn-xs.phone { background: rgba(126, 231, 135, 0.15); border-color: var(--info); color: var(--info); }
 .btn-xs.phone:hover { background: rgba(126, 231, 135, 0.25); }
 
+/* --- Settings overlay -------------------------------- */
+#settings-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0,0,0,.55);
+  display: flex; align-items: center; justify-content: center;
+}
+.settings-card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1rem 1.2rem;
+  width: 92vw; max-width: 540px; max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 16px 48px rgba(0,0,0,.4);
+}
+.settings-head { display: flex; align-items: center; justify-content: space-between; }
+.settings-head h3 { margin: 0; font-size: 1.1rem; }
+.settings-body { padding: 0.4rem 0 0.8rem; }
+.setting-row {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  padding: 0.6rem 0.2rem; border-bottom: 1px dashed var(--border);
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-row input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--accent); margin-top: 2px; flex-shrink: 0; }
+.setting-row > span { display: flex; flex-direction: column; gap: 0.15rem; }
+.settings-foot { display: flex; gap: 0.5rem; justify-content: flex-end; padding-top: 0.5rem; }
+
+table.host-table.hide-down tr.host-down { display: none; }
+
 /* --- Hosts table + per-host detail ------------------- */
 table.host-table, table.port-table {
   width: 100%; border-collapse: collapse;

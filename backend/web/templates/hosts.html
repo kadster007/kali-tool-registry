@@ -1,8 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Hosts <span class="hint">({{ hosts|length }})</span></h1>
-<p class="hint">Aggregated across every <code>nmap -oX</code> file in <code>~/pivot-logs/</code>.
-Click a host for service detail + vuln check.</p>
+{% set up_hosts = hosts | selectattr("state", "equalto", "up") | list %}
+<h1>Hosts
+  <span class="hint">({{ up_hosts|length }} live <span class="hint small">/ {{ hosts|length }} total</span>)</span>
+</h1>
+<p class="hint">Aggregated across every <code>nmap -oX</code> in <code>~/pivot-logs/</code>.
+Dead/no-response hosts are hidden by default — toggle via <strong>⚙ Settings → Hide non-live hosts</strong>.</p>
 
 {% if not hosts %}
 <p class="hint">No structured scan data yet. Run any nmap preset from the Phases panel,

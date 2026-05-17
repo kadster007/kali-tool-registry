@@ -32,7 +32,9 @@ window.shadowops = window.shadowops || {};
 
     ws.onopen = () => {
       sendResize();
-      term.focus();
+      // Mobile: don't grab focus on open — that pops up the soft keyboard
+      // every time we switch modes. Respect user setting if they override.
+      if (shadowops.prefs.autoFocusTerminal) term.focus();
     };
     ws.onmessage = (ev) => {
       if (typeof ev.data === 'string') {
@@ -146,8 +148,6 @@ window.shadowops = window.shadowops || {};
     return out;
   }
 
-  const IS_MOBILE = /android|iphone|ipad|mobile/i.test(navigator.userAgent || '');
-
   function sendCmd(cmd) {
     if (!ws || ws.readyState !== 1) {
       connect('local');
@@ -155,13 +155,10 @@ window.shadowops = window.shadowops || {};
       return;
     }
     ws.send(cmd + '\r');
-    // On mobile, term.focus() opens the soft keyboard — annoying when running
-    // presets you don't intend to type into. Only focus on desktop, where it
-    // helps. Mobile users tap the terminal area itself when they want input.
-    if (!IS_MOBILE) {
+    if (shadowops.prefs.autoFocusTerminal) {
       term.focus();
     } else if (document.activeElement && document.activeElement.blur) {
-      // Belt-and-suspenders: kick the keyboard down if something else focused.
+      // Kick the keyboard down so it doesn't linger after a preset
       document.activeElement.blur();
     }
   }
