@@ -117,6 +117,24 @@ case "$cmd" in
             || echo "[pivot] DoH lookup failed"
         ;;
 
+    # Tools that need raw sockets / ICMP / UDP — can't pivot via SOCKS5.
+    # Print a clear explanation rather than the generic 'unknown subcommand'.
+    fping|arp-scan|masscan|netdiscover|hping3|nbtscan|ping|traceroute)
+        cat <<EOF >&2
+[pivot] '$cmd' uses raw sockets / ICMP / UDP — SOCKS5 only carries TCP,
+        so this tool CAN NOT pivot through the phone. It will only see
+        kadx's local network if run here.
+
+To run it directly on kadx (sees kadx's LAN only):
+        sudo $cmd $*
+
+To run it from the phone's vantage point (sees phone's Wi-Fi LAN, needs
+root on the phone — Termux typically doesn't have it):
+        ssh -p 8022 u0_a559@127.0.0.1 'sudo $cmd $*'
+EOF
+        exit 3
+        ;;
+
     shell)
         require_tunnel
         echo "[pivot] sub-shell — type 'exit' to leave. Default-proxy via 'p <cmd>'."

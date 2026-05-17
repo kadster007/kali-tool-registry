@@ -181,6 +181,43 @@ stop_pivot() {
     fi
 }
 
+watchdog_running() {
+    pgrep -fa "pivot-watchdog" >/dev/null 2>&1
+}
+
+start_watchdog() {
+    if watchdog_running; then
+        gum style --foreground 220 "Watchdog already running (pid $(pgrep -f pivot-watchdog | head -1))."
+    else
+        nohup "$FRONTEND_DIR/pivot-watchdog.sh" > "$HOME/pivot-watchdog.log" 2>&1 &
+        disown
+        sleep 0.8
+        if watchdog_running; then
+            gum style --foreground 42 "✓ watchdog started — pid $(pgrep -f pivot-watchdog | head -1)"
+            gum style --foreground 240 "  logs: ~/pivot-watchdog.log"
+        else
+            gum style --foreground 196 "✗ watchdog failed to start (see ~/pivot-watchdog.log)"
+        fi
+    fi
+    gum input --placeholder "Press Enter to return" > /dev/null
+}
+
+stop_watchdog() {
+    if watchdog_running; then
+        pkill -f pivot-watchdog 2>/dev/null
+        sleep 0.5
+        gum style --foreground 196 "Watchdog stopped."
+    else
+        gum style --foreground 240 "Watchdog not running."
+    fi
+    gum input --placeholder "Press Enter to return" > /dev/null
+}
+
+watchdog_log() {
+    gum style --foreground 240 "Last 30 lines of ~/pivot-watchdog.log:"
+    tail -30 "$HOME/pivot-watchdog.log" 2>/dev/null | gum pager || gum style --foreground 240 "(no log yet)"
+}
+
 # --- main loop ----------------------------------------------------------
 
 while true; do
@@ -197,6 +234,9 @@ while true; do
         "View recent logs" \
         "Pivot status (detail)" \
         "Stop pivot" \
+        "Start watchdog (auto-rebuild on network change)" \
+        "Stop watchdog" \
+        "View watchdog log" \
         "Quit")
     case "$CHOICE" in
         "Start pivot")                  start_pivot ;;
@@ -206,6 +246,9 @@ while true; do
         "View recent logs")             view_recent_logs ;;
         "Pivot status (detail)")        run_remote_quiet "bash ~/pivot-status.sh" ;;
         "Stop pivot")                   stop_pivot ;;
+        "Start watchdog (auto-rebuild on network change)") start_watchdog ;;
+        "Stop watchdog")                stop_watchdog ;;
+        "View watchdog log")            watchdog_log ;;
         "Quit"|"")                      clear; exit 0 ;;
     esac
 done

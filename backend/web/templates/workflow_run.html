@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/workflows">← all workflows</a></p>
+<h1>{{ wf.name }}</h1>
+<p class="hint">{{ wf.description }}</p>
+
+<section class="card">
+  <h2>Target</h2>
+  <div class="form-row inline">
+    <input type="text" id="wf-target" placeholder="e.g. 192.168.1.0/24" value="" />
+    <button class="btn-sm" onclick="wf.fillTarget()">↺ from Fold 6</button>
+  </div>
+  <p class="hint small">Will substitute for <code>{target}</code> in each step. <code>{live_hosts}</code> is auto-derived from latest scan after the discovery step runs.</p>
+</section>
+
+<section class="card">
+  <h2>Steps</h2>
+  <ol class="wf-runlist" id="wf-runlist">
+    {% for s in wf.steps %}
+    <li class="wf-runstep" data-step-id="{{ s.id }}" data-command="{{ s.command }}">
+      <div class="wf-step-head">
+        <strong>{{ loop.index }}. {{ s.name }}</strong>
+        <span class="wf-state" data-state="pending">pending</span>
+      </div>
+      <div class="wf-preview">
+        <span class="hint small">runs:</span>
+        <code class="wf-preview-cmd"></code>
+      </div>
+      <textarea class="wf-edit" rows="2" placeholder="edit the command before running…"></textarea>
+      <div class="wf-step-actions">
+        <button class="btn-sm" onclick="wf.runStep('{{ s.id }}')">▶ Run this step</button>
+        <button class="btn-sm warn" onclick="wf.skipStep('{{ s.id }}')">⤼ Skip</button>
+        <button class="btn-sm outline" onclick="wf.refreshPreview('{{ s.id }}')">↻ Refresh preview</button>
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+
+<script>
+const wf = (function () {
+  const wfId = {{ wf.id | tojson }};
+
+  async function buildPreview(rawCmd) {
+    const target = (document.getElementById('wf-target').value || '').trim();
+    const r = await fetch('/api/workflow/substitute', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({command: rawCmd, target: target}),
+    });
+    const d = await r.json();
+    return d.command || rawCmd;
+  }
+
+  async function refreshPreview(stepId) {
+    const li = document.querySelector(`[data-step-id="${stepId}"]`);
+    const editArea = li.querySelector('.wf-edit');
+    const raw = editArea.value.trim() || li.dataset.command;
+    const built = await buildPreview(raw);
+    li.querySelector('.wf-preview-cmd').textContent = built;
+  }
+
+  async function refreshAllPreviews() {
+    for (const li of document.querySelectorAll('.wf-runstep')) {
+      const editArea = li.querySelector('.wf-edit');
+      const raw = editArea.value.trim() || li.dataset.command;
+      const built = await buildPreview(raw);
+      li.querySelector('.wf-preview-cmd').textContent = built;
+    }
+  }
+
+  async function runStep(stepId) {
+    const li = document.querySelector(`[data-step-id="${stepId}"]`);
+    const editArea = li.querySelector('.wf-edit');
+    const raw = editArea.value.trim() || li.dataset.command;
+    const cmd = await buildPreview(raw);
+    if (!cmd.trim()) return alert('empty command');
+    if (window.shadowops && window.shadowops._sendCmd) {
+      window.shadowops._sendCmd(cmd);
+    }
+    li.querySelector('.wf-state').dataset.state = 'running';
+    li.querySelector('.wf-state').textContent = 'running…';
+    // After we believe it's done, user clicks refresh on next step to re-resolve vars
+    setTimeout(() => {
+      li.querySelector('.wf-state').textContent = 'done';
+      li.querySelector('.wf-state').dataset.state = 'done';
+      // Auto-refresh next step's preview (live_hosts may now be available)
+      const next = li.nextElementSibling;
+      if (next) {
+        const nextId = next.dataset.stepId;
+        if (nextId) refreshPreview(nextId);
+      }
+    }, 5000);
+  }
+
+  function skipStep(stepId) {
+    const li = document.querySelector(`[data-step-id="${stepId}"]`);
+    li.querySelector('.wf-state').dataset.state = 'skipped';
+    li.querySelector('.wf-state').textContent = 'skipped';
+  }
+
+  async function fillTarget() {
+    const r = await fetch('/api/phone_info?force=1');
+    const d = await r.json();
+    if (d.subnet) {
+      document.getElementById('wf-target').value = d.subnet;
+      refreshAllPreviews();
+    }
+  }
+
+  document.getElementById('wf-target').addEventListener('input', () => refreshAllPreviews());
+  refreshAllPreviews();
+  return { runStep, skipStep, refreshPreview, fillTarget };
+})();
+</script>
+{% endblock %}

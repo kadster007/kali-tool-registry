@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "_doc": "Each workflow is a sequence of steps. Steps run in the terminal, one at a time. Between steps, the user can edit, skip, or continue.",
+  "_variables": {
+    "{target}": "Substituted with the Target widget value",
+    "{live_hosts}": "Comma-separated IPs from the latest scan with state=up AND at least one open port"
+  },
+  "workflows": [
+    {
+      "id": "lan-discovery",
+      "name": "LAN Discovery → Services → Vulns",
+      "description": "Classic three-step recon: find live hosts on a subnet, get service versions, then run vuln scripts.",
+      "steps": [
+        {
+          "id": "discover",
+          "name": "Discover live hosts",
+          "command": "pivot nmap -sT -Pn -PS22,80,443 -p 22,80,443 --open {target}",
+          "feed": "live_hosts"
+        },
+        {
+          "id": "service",
+          "name": "Service / version detect on live hosts",
+          "command": "pivot nmap -sT -Pn -sV --version-all -p 1-1000 {live_hosts}"
+        },
+        {
+          "id": "vuln",
+          "name": "Vuln scripts on live hosts",
+          "command": "pivot nmap -sT -Pn -sV --script vulners,vuln -p 1-1000 {live_hosts}"
+        }
+      ]
+    },
+    {
+      "id": "quick-host",
+      "name": "Quick single-host enum",
+      "description": "Focused workflow against one IP — service detect then vuln check.",
+      "steps": [
+        {
+          "id": "services",
+          "name": "Service detect",
+          "command": "pivot nmap -sT -Pn -sV --version-all -p 1-1000 {target}"
+        },
+        {
+          "id": "vuln",
+          "name": "Vuln scan",
+          "command": "pivot nmap -sT -Pn -sV --script vulners,vuln -p 1-1000 {target}"
+        },
+        {
+          "id": "searchsploit",
+          "name": "searchsploit on detected product",
+          "command": "searchsploit --colour=off {service}"
+        }
+      ]
+    },
+    {
+      "id": "smb-audit",
+      "name": "SMB / Windows audit",
+      "description": "Find SMB hosts, enumerate shares + users, attempt null session.",
+      "steps": [
+        {
+          "id": "smb-find",
+          "name": "Find SMB hosts on subnet",
+          "command": "pivot nmap -sT -Pn -p 445,139 --open {target}",
+          "feed": "live_hosts"
+        },
+        {
+          "id": "smb-enum",
+          "name": "SMB enum (shares, users, OS)",
+          "command": "pivot nmap -sT -Pn --script smb-enum-shares,smb-enum-users,smb-os-discovery,smb-security-mode -p 445,139 {live_hosts}"
+        },
+        {
+          "id": "smbmap",
+          "name": "smbmap null session check",
+          "command": "pivot smbmap -H {live_hosts} --no-banner"
+        }
+      ]
+    }
+  ]
+}

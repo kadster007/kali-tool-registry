@@ -330,6 +330,28 @@ footer { text-align: center; color: var(--muted); padding: 0.3rem; font-size: 0.
 .btn-xs.phone { background: rgba(126, 231, 135, 0.15); border-color: var(--info); color: var(--info); }
 .btn-xs.phone:hover { background: rgba(126, 231, 135, 0.25); }
 
+/* --- Workflows ---------------------------------------- */
+.wf-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0.8rem; }
+.wf-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1rem; }
+.wf-head { display: flex; justify-content: space-between; align-items: baseline; }
+.wf-card h2 { margin: 0 0 0.3rem; font-size: 1.05rem; color: var(--fg); }
+.wf-steps { padding-left: 1.4rem; margin: 0.5rem 0; font-size: 0.85rem; }
+.wf-steps li { margin: 0.35rem 0; }
+.wf-cmd { display: block; background: #010409; padding: 0.25rem 0.45rem; border-radius: 4px; font-size: 0.72rem; margin-top: 0.15rem; word-break: break-all; }
+.wf-actions { margin-top: 0.7rem; }
+
+.wf-runlist { list-style: none; padding: 0; }
+.wf-runstep { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.85rem; margin-bottom: 0.6rem; }
+.wf-step-head { display: flex; justify-content: space-between; align-items: center; }
+.wf-state { font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; background: var(--panel-3); color: var(--muted); }
+.wf-state[data-state="running"] { background: var(--warn); color: #0d1117; }
+.wf-state[data-state="done"]    { background: var(--good); color: #0d1117; }
+.wf-state[data-state="skipped"] { background: var(--muted); color: #0d1117; }
+.wf-preview { background: #010409; padding: 0.4rem 0.55rem; border-radius: 5px; margin: 0.4rem 0; }
+.wf-preview-cmd { font-family: var(--mono); font-size: 0.78rem; color: var(--fg); word-break: break-all; }
+.wf-edit { width: 100%; background: var(--panel); border: 1px dashed var(--border); color: var(--fg); padding: 0.35rem 0.5rem; border-radius: 4px; font-family: var(--mono); font-size: 0.78rem; margin: 0.3rem 0; resize: vertical; }
+.wf-step-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
 /* --- Settings overlay -------------------------------- */
 #settings-overlay {
   position: fixed; inset: 0; z-index: 50;

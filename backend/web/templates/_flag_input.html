@@ -1,0 +1,45 @@
+{# Render one flag input based on its type. Expects `fid` and `f` in scope.
+   Also reads `grp` if currently inside a mutex group. #}
+{% if f.type == 'boolean' %}
+<label class="flag-chip {% if f.requires_root %}root{% endif %}"
+       data-id="{{ fid }}"{% if grp is defined and grp %} data-group="{{ grp.id }}" data-exclusive="{{ '1' if grp.exclusive else '0' }}"{% endif %}>
+  <input type="checkbox" class="flag-toggle"
+         data-id="{{ fid }}"
+         data-flag="{{ f.flag }}"
+         {% if grp is defined and grp %}data-group="{{ grp.id }}" data-exclusive="{{ '1' if grp.exclusive else '0' }}"{% endif %}
+         {% if f.default %}checked{% endif %} />
+  <code class="flag-name">{{ f.flag }}</code>
+  <span class="flag-desc">{{ f.label or '' }}</span>
+  {% if f.requires_root %}<span class="badge danger small">root</span>{% endif %}
+</label>
+
+{% elif f.type == 'string' %}
+<div class="flag-chip wide" data-id="{{ fid }}">
+  <code class="flag-name">{{ f.flag }}</code>
+  <input type="text" class="flag-value"
+         data-id="{{ fid }}"
+         data-flag="{{ f.flag }}"
+         placeholder="{{ f.placeholder or '' }}"
+         value="{{ f.default or '' }}" />
+  <span class="flag-desc">{{ f.label or '' }}</span>
+</div>
+
+{% elif f.type == 'select' %}
+<div class="flag-chip select" data-id="{{ fid }}">
+  <span class="flag-name">{{ f.label or fid }}</span>
+  <select class="flag-select" data-id="{{ fid }}">
+    <option value="">(none)</option>
+    {% for opt in f.options or [] %}
+    <option value="{{ opt.value }}" {% if f.default == opt.value %}selected{% endif %}>
+      {{ opt.label or opt.value }}{% if opt.requires_root %} · root{% endif %}
+    </option>
+    {% endfor %}
+  </select>
+</div>
+
+{% else %}
+<div class="flag-chip" data-id="{{ fid }}">
+  <code class="flag-name">{{ f.flag or fid }}</code>
+  <span class="flag-desc">{{ f.label or '' }} <em class="hint small">({{ f.type }})</em></span>
+</div>
+{% endif %}

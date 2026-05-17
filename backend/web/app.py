@@ -38,6 +38,7 @@ import notes as notes_mod
 import version as version_mod
 import scan as scan_mod
 import files as files_mod
+import workflows as workflows_mod
 
 # ---- paths -----------------------------------------------------------------
 HOME = Path(os.environ.get("HOME", "/home/kadx"))
@@ -373,6 +374,36 @@ async def healthz():
 async def terminal_page(request: Request):
     """Full-screen terminal page (no sidebars). Same xterm.js + pty backend."""
     return templates.TemplateResponse(request, "terminal.html", {"page": "terminal"})
+
+
+@app.get("/workflows", response_class=HTMLResponse)
+async def workflows_page(request: Request):
+    return templates.TemplateResponse(request, "workflows.html", {
+        "page": "workflows",
+        "workflows": workflows_mod.load_workflows(),
+    })
+
+
+@app.get("/workflows/{wf_id}/run", response_class=HTMLResponse)
+async def workflow_run(request: Request, wf_id: str):
+    wf = workflows_mod.get_workflow(wf_id)
+    if not wf:
+        return HTMLResponse(f"<p>Workflow {wf_id} not found.</p>", status_code=404)
+    return templates.TemplateResponse(request, "workflow_run.html", {
+        "page": "workflows",
+        "wf": wf,
+    })
+
+
+@app.post("/api/workflow/substitute")
+async def api_workflow_substitute(body: Dict = None):
+    """POST {command, target} -> {command: substituted}"""
+    from fastapi import Body
+    return {"command": workflows_mod.substitute(
+        (body or {}).get("command", ""),
+        (body or {}).get("target", ""),
+        scan_mod,
+    )}
 
 
 @app.get("/files", response_class=HTMLResponse)

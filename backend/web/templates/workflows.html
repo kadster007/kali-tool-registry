@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Workflows</h1>
+<p class="hint">Chainlink scan sequences. Each step's command runs in the terminal; between steps you can review the latest scan, edit the next command, or stop. Variables like <code>{live_hosts}</code> auto-substitute from the most recent scan.</p>
+
+<div class="wf-cards">
+  {% for wf in workflows %}
+  <article class="wf-card">
+    <header class="wf-head">
+      <h2>{{ wf.name }}</h2>
+      <span class="hint small">{{ wf.steps|length }} step{% if wf.steps|length != 1 %}s{% endif %}</span>
+    </header>
+    <p class="hint small">{{ wf.description }}</p>
+    <ol class="wf-steps">
+      {% for s in wf.steps %}
+      <li><strong>{{ s.name }}</strong>
+        <code class="wf-cmd">{{ s.command }}</code>
+        {% if s.feed %}<span class="badge small">→ {{ s.feed }}</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+    <div class="wf-actions">
+      <a class="btn" href="/workflows/{{ wf.id }}/run">▶ Start workflow</a>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% endblock %}

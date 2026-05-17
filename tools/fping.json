@@ -110,16 +110,5 @@
       "desc": "3 pings each",
       "cmd": "fping -c 3 -g 192.168.1.0/24"
     }
-  ],
-  "flag_groups": [
-    {
-      "id": "host_state_filter",
-      "label": "Show only alive OR unreach (pick one)",
-      "exclusive": true,
-      "flags": [
-        "-a",
-        "-u"
-      ]
-    }
   ]
 }
