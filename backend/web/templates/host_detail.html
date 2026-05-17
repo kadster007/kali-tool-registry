@@ -91,6 +91,18 @@
   })">🔎 searchsploit (top product)</button>
 </div>
 
+<h2>Run any tool against {{ host.ip }}</h2>
+<p class="hint small">Opens the tool's form pre-filled with this host as target.</p>
+<div class="tool-launch-grid">
+  {% for t in all_tools %}
+  <a class="tool-launch" href="/tools/{{ t._id }}?target={{ host.ip }}">
+    {% if t.icon %}<span class="ti">{{ t.icon }}</span>{% endif %}
+    <span class="tn">{{ t.name or t._id }}</span>
+    <span class="td hint small">{{ (t.description or '')|truncate(70) }}</span>
+  </a>
+  {% endfor %}
+</div>
+
 <h2>Source scans</h2>
 <ul class="hint small">
   {% for s in host.sources[-10:] %}

@@ -318,13 +318,22 @@ async def tools_list(request: Request):
 
 
 @app.get("/tools/{tool_id}", response_class=HTMLResponse)
-async def tool_detail(request: Request, tool_id: str):
+async def tool_detail(request: Request, tool_id: str, target: str = ""):
     tool = next((t for t in load_tools() if t.get("_id") == tool_id), None)
     if not tool:
         return HTMLResponse(f"<p>Tool {tool_id} not found.</p>", status_code=404)
+    # Provide known hosts for the target picker
+    known = []
+    try:
+        known = [{"ip": h["ip"], "hostnames": h.get("hostnames") or []}
+                 for h in scan_mod.hosts_sorted() if h.get("state") == "up"]
+    except Exception:
+        pass
     return templates.TemplateResponse(request, "tool_detail.html", {
         "tool": tool,
         "page": "tools",
+        "target_default": target,
+        "known_hosts": known,
     })
 
 
@@ -626,6 +635,7 @@ async def host_detail(request: Request, ip: str):
         return HTMLResponse(f"<p>Host <code>{ip}</code> not in any scan yet. Run a scan first.</p>", status_code=404)
     return templates.TemplateResponse(request, "host_detail.html", {
         "host": h,
+        "all_tools": load_tools(),
         "page": "hosts",
     })
 
