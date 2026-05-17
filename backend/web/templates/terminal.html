@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ShadowOps · Terminal</title>
+<script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+<link rel="stylesheet" href="/static/style.css" />
+<style>
+  body { overflow: hidden; }
+  .term-fullscreen {
+    display: flex; flex-direction: column;
+    height: 100vh;
+  }
+  .term-fullscreen header.nav { flex-shrink: 0; }
+  .term-fullscreen .term-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+</style>
+</head>
+<body>
+<div class="term-fullscreen">
+<header class="nav">
+  <div class="brand">ShadowOps</div>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/scan">Scan</a>
+    <a href="/tools">Tools</a>
+    <a href="/hosts">Hosts</a>
+    <a class="active" href="/terminal">Terminal</a>
+  </nav>
+  <div class="nav-right">
+    <button class="icon-btn" onclick="shadowops.openSettings()" title="Settings">⚙</button>
+  </div>
+</header>
+
+<section class="terminal-panel term-body" style="background:#010409;">
+  <div class="terminal-bar">
+    <span class="terminal-title">Terminal (full page)</span>
+    <span class="terminal-mode" id="term-mode">kadx</span>
+    <div class="terminal-actions">
+      <button class="btn-sm" id="term-local">kadx shell</button>
+      <button class="btn-sm" id="term-phone">SSH to phone</button>
+      <button class="btn-sm warn" id="term-reset">Reset</button>
+    </div>
+  </div>
+  <div class="terminal-keys" id="terminal-keys">
+    <button class="kbd-btn" data-keys="\t" title="Tab">Tab</button>
+    <button class="kbd-btn" data-keys="" title="Esc">Esc</button>
+    <button class="kbd-btn" data-keys="[A" title="Up">↑</button>
+    <button class="kbd-btn" data-keys="[B" title="Down">↓</button>
+    <button class="kbd-btn" data-keys="[D" title="Left">←</button>
+    <button class="kbd-btn" data-keys="[C" title="Right">→</button>
+    <button class="kbd-btn" data-keys="" title="Ctrl-C">^C</button>
+    <button class="kbd-btn" data-keys="" title="Ctrl-D">^D</button>
+    <button class="kbd-btn" data-keys="" title="Ctrl-Z">^Z</button>
+    <button class="kbd-btn" data-keys="" title="Ctrl-L">^L</button>
+    <button class="kbd-btn" id="kbd-focus" title="Open soft keyboard">⌨</button>
+  </div>
+  <div class="terminal-host" id="terminal-host" style="flex:1; min-height:0;"></div>
+</section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
+<script src="/static/prefs.js"></script>
+<script src="/static/terminal.js"></script>
+</body>
+</html>

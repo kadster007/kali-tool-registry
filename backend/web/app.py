@@ -368,6 +368,29 @@ async def healthz():
     return "ok"
 
 
+@app.get("/terminal", response_class=HTMLResponse)
+async def terminal_page(request: Request):
+    """Full-screen terminal page (no sidebars). Same xterm.js + pty backend."""
+    return templates.TemplateResponse(request, "terminal.html", {"page": "terminal"})
+
+
+@app.get("/api/right_host_panel", response_class=HTMLResponse)
+async def api_right_host_panel(request: Request):
+    """Right sidebar — live host activity summary."""
+    try:
+        hosts = scan_mod.hosts_sorted()
+        up = [h for h in hosts if h.get("state") == "up"]
+        recent_5 = sorted(up, key=lambda h: h.get("last_seen", 0), reverse=True)[:5]
+        return templates.TemplateResponse(request, "_right_host_panel.html", {
+            "total": len(hosts),
+            "up_count": len(up),
+            "recent": recent_5,
+        })
+    except Exception as e:
+        return templates.TemplateResponse(request, "_error_card.html",
+            {"title": "Hosts", "msg": str(e), "retry": "/api/right_host_panel"})
+
+
 # --- new: phone state & pivot control endpoints --------------------------
 
 @app.get("/api/phone_info")

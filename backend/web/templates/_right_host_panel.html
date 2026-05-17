@@ -1,0 +1,32 @@
+<div class="panel-header">
+  <h3>Host activity</h3>
+  <button class="icon-btn-sm" title="Refresh"
+          hx-get="/api/right_host_panel" hx-target="#right-host-panel" hx-swap="innerHTML">↻</button>
+</div>
+
+<div class="status-card compact">
+  <div class="status-row">
+    <span class="status-label">Live / total</span>
+    <span class="status-value"><strong>{{ up_count }}</strong> / {{ total }}</span>
+  </div>
+</div>
+
+<h4 class="sidebar-subhead">Recent hosts (live)</h4>
+<ul class="host-mini">
+  {% for h in recent %}
+  <li>
+    <a href="/hosts/{{ h.ip }}" class="host-mini-link">
+      <code>{{ h.ip }}</code>
+      {% set open_ports = h.ports | selectattr("state","equalto","open") | list %}
+      {% if open_ports %}<span class="hint small">{{ open_ports|length }} open</span>{% endif %}
+    </a>
+    {% if h.hostnames %}<span class="hint small">{{ h.hostnames|first }}</span>{% endif %}
+  </li>
+  {% else %}
+  <li class="hint small">No live hosts yet — run a scan.</li>
+  {% endfor %}
+</ul>
+
+<div style="margin-top:0.6em">
+  <a href="/hosts" class="btn-sm">All hosts →</a>
+</div>

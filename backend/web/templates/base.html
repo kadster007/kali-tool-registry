@@ -19,6 +19,7 @@
     <a class="{% if page=='hosts' %}active{% endif %}" href="/hosts">Hosts</a>
     <a class="{% if page=='logs' %}active{% endif %}" href="/logs">Logs</a>
     <a class="{% if page=='notes' %}active{% endif %}" href="/notes">Notes</a>
+    <a class="{% if page=='terminal' %}active{% endif %}" href="/terminal">Terminal</a>
   </nav>
   <!-- Compact status indicator in header (auto-fills from /api/header_status; no auto-refresh) -->
   <div class="header-status" id="header-status"
@@ -53,6 +54,11 @@
 
   <div class="middle" id="middle">
     <main class="main" id="main">
+      <!-- Right sidebar (Host activity) — desktop only; collapses on narrow screens -->
+      <aside class="sidebar right" id="sidebar-right"
+             hx-get="/api/right_host_panel" hx-trigger="load" hx-swap="innerHTML">
+        <div class="panel-loading">Loading host activity…</div>
+      </aside>
       <!-- Target widget: auto-fills preset variables. Pulls from /api/phone_info.
            Inputs are readonly by default so the soft keyboard doesn't pop up
            every time we render. Tap the ✏ button to edit. -->
