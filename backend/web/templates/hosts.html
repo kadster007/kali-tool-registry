@@ -1,17 +1,32 @@
 {% extends "base.html" %}
 {% block content %}
 {% set up_hosts = hosts | selectattr("state", "equalto", "up") | list %}
-<h1>Hosts
-  <span class="hint">({{ up_hosts|length }} live <span class="hint small">/ {{ hosts|length }} total</span>)</span>
-</h1>
-<p class="hint">Aggregated across every <code>nmap -oX</code> in <code>~/pivot-logs/</code>.
-Dead/no-response hosts are hidden by default — toggle via <strong>⚙ Settings → Hide non-live hosts</strong>.</p>
 
-{% if not hosts %}
-<p class="hint">No structured scan data yet. Run any nmap preset from the Phases panel,
-or <code>pivot nmap -sT -Pn -sV {target}</code> in the terminal — XML output is now
-auto-emitted alongside the human log.</p>
-{% endif %}
+<div class="hosts-head">
+  <h1>Hosts
+    <span class="hint">({{ up_hosts|length }} live <span class="hint small">/ {{ hosts|length }} in this view</span>)</span>
+  </h1>
+
+  <form method="get" action="/hosts" class="scan-picker">
+    <label class="hint small">Scan source:</label>
+    <select name="scan" onchange="this.form.submit()">
+      <option value="latest" {% if active_scan in ('latest', '', None) %}selected{% endif %}>Latest scan</option>
+      <option value="all" {% if active_scan == 'all' %}selected{% endif %}>Aggregate (all {{ scans|length }} scans)</option>
+      <optgroup label="Specific scan">
+        {% for s in scans %}
+        <option value="{{ s.name }}" {% if active_scan == s.name %}selected{% endif %}>
+          {{ s.mtime | datetimeformat }} — {{ s.name }} ({{ s.hosts_up }}/{{ s.hosts_total }} up)
+        </option>
+        {% endfor %}
+      </optgroup>
+    </select>
+  </form>
+</div>
+
+<p class="hint small">
+  Viewing: <strong>{{ active_label }}</strong>{% if active_file %} · <code>{{ active_file.split('/') | last }}</code>{% endif %}.
+  Dead/no-response hosts hidden by default — toggle in <strong>⚙ Settings</strong>.
+</p>
 
 <table class="host-table">
   <thead>
@@ -47,6 +62,8 @@ auto-emitted alongside the human log.</p>
       <td><span class="hint small">{{ h.os or '—' }}</span></td>
       <td><span class="hint small">{{ h.last_seen | datetimeformat }}</span></td>
     </tr>
+    {% else %}
+    <tr><td colspan="6"><em class="hint">No hosts in this view.</em></td></tr>
     {% endfor %}
   </tbody>
 </table>

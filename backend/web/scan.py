@@ -166,3 +166,60 @@ def latest_scan() -> Optional[Dict]:
     if not files:
         return None
     return parse_nmap_xml(files[0])
+
+
+def scan_list() -> List[Dict]:
+    """List every XML scan file with a quick summary (no full parse)."""
+    out = []
+    for p in all_xml_files():
+        try:
+            stat = p.stat()
+        except OSError:
+            continue
+        scan = parse_nmap_xml(p) or {}
+        hosts = scan.get("hosts") or []
+        up = sum(1 for h in hosts if h.get("state") == "up")
+        out.append({
+            "file": str(p),
+            "name": p.name,
+            "mtime": int(stat.st_mtime),
+            "hosts_total": len(hosts),
+            "hosts_up": up,
+            "args": (scan.get("args") or "")[:80],
+        })
+    return out
+
+
+def hosts_from_scan(scan: Optional[Dict]) -> List[Dict]:
+    """Flatten a single parsed scan into the same shape as hosts_sorted()."""
+    if not scan:
+        return []
+    out = []
+    for h in scan.get("hosts") or []:
+        # Normalize shape to match aggregated hosts (include sources field).
+        ports = list(h.get("ports") or [])
+        ports.sort(key=lambda p: (p.get("proto") or "", p.get("port") or 0))
+        out.append({
+            "ip": h.get("ip"),
+            "mac": h.get("mac"),
+            "hostnames": list(h.get("hostnames") or []),
+            "state": h.get("state"),
+            "os": h.get("os"),
+            "ports": ports,
+            "host_scripts": list(h.get("host_scripts") or []),
+            "sources": [{"file": scan.get("file"), "ts": scan.get("file_mtime"), "args": scan.get("args")}],
+            "first_seen": scan.get("file_mtime"),
+            "last_seen": scan.get("file_mtime"),
+        })
+    out.sort(key=lambda r: _ip_sort_key(r["ip"]))
+    return out
+
+
+def scan_by_file(file_path: str) -> Optional[Dict]:
+    """Look up a scan by its file path; returns parsed dict or None."""
+    from os.path import abspath
+    target = abspath(file_path)
+    for p in all_xml_files():
+        if abspath(str(p)) == target:
+            return parse_nmap_xml(p)
+    return None

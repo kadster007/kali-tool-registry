@@ -132,11 +132,28 @@ header.nav nav a:hover, header.nav nav a.active {
   overflow-y: auto;
   padding: 0.6rem 0.7rem 1rem;
 }
-@media (max-width: 1000px) {
+/* Tablet: keep 3 columns but tighter right sidebar */
+@media (max-width: 1100px) and (min-width: 901px) {
+  :root { --right-w: 220px; }
+}
+
+/* Phone / narrow tablet: stack everything, right sidebar appears below main */
+@media (max-width: 900px) {
+  body { overflow: auto; }
   .layout {
-    grid-template-columns: var(--left-w) var(--handle-w) 1fr;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto;
+    height: auto;
   }
-  .layout > .resizer:last-of-type, .sidebar.right { display: none; }
+  .resizer.vertical { display: none; }
+  .sidebar.left, .sidebar.right {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    max-height: none;
+  }
+  .sidebar.right { border-bottom: none; border-top: 1px solid var(--border); }
+  .middle { min-height: 50vh; }
 }
 
 .sidebar.left {
@@ -471,6 +488,19 @@ a.tool-launch:hover { border-color: var(--accent); background: var(--panel-3); }
 .tool-launch .ti { font-size: 1.2rem; }
 .tool-launch .tn { font-weight: 600; color: var(--fg); }
 .tool-launch .td { font-size: 0.72rem; }
+
+/* --- Scan picker on /hosts --------------------------- */
+.hosts-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  flex-wrap: wrap; gap: 0.7rem; margin-bottom: 0.4rem;
+}
+.scan-picker { display: flex; align-items: center; gap: 0.5rem; }
+.scan-picker select {
+  background: var(--panel-2); border: 1px solid var(--border);
+  color: var(--fg); padding: 0.35rem 0.55rem; border-radius: 5px;
+  font-family: var(--mono); font-size: 0.82rem;
+  min-width: 220px;
+}
 
 /* --- Hosts table + per-host detail ------------------- */
 table.host-table, table.port-table {

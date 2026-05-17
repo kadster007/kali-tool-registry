@@ -652,11 +652,33 @@ async def api_notes_delete(nid: str):
 # --- structured hosts (Phase 2 / 3) ------------------------------------
 
 @app.get("/hosts", response_class=HTMLResponse)
-async def hosts_list(request: Request):
-    hosts = scan_mod.hosts_sorted()
+async def hosts_list(request: Request, scan: str = "latest"):
+    """Hosts page. Default: latest scan only (so new scans dominate the view).
+    Override with ?scan=all (aggregate) or ?scan=<filename> (specific scan)."""
+    scans = scan_mod.scan_list()
+    if scan == "all":
+        hosts = scan_mod.hosts_sorted()
+        active_label = "Aggregate of all scans"
+        active_file = None
+    elif scan == "latest" or not scan:
+        s = scan_mod.latest_scan()
+        hosts = scan_mod.hosts_from_scan(s)
+        active_label = "Latest scan"
+        active_file = s.get("file") if s else None
+    else:
+        # Allow either basename or absolute path
+        target = next((x for x in scans if x["name"] == scan or x["file"] == scan), None)
+        s = scan_mod.scan_by_file(target["file"]) if target else None
+        hosts = scan_mod.hosts_from_scan(s)
+        active_label = target["name"] if target else "(not found)"
+        active_file = target["file"] if target else None
     return templates.TemplateResponse(request, "hosts.html", {
         "hosts": hosts,
         "page": "hosts",
+        "scans": scans,
+        "active_scan": scan,
+        "active_label": active_label,
+        "active_file": active_file,
     })
 
 
