@@ -96,6 +96,15 @@
       <div class="terminal-host" id="terminal-host"></div>
     </section>
   </div>
+
+  <div class="resizer vertical" id="resizer-right" data-side="right"
+       title="Drag to resize · double-click to reset"></div>
+
+  <!-- RIGHT SIDEBAR: current scan only -->
+  <aside class="sidebar right" id="sidebar-right"
+         hx-get="/api/right_host_panel" hx-trigger="load" hx-swap="innerHTML">
+    <div class="panel-loading">Loading current scan…</div>
+  </aside>
 </div>
 
 <footer>

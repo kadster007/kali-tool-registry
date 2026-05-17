@@ -63,7 +63,7 @@ window.shadowops = window.shadowops || {};
       document.addEventListener('mouseup', end);
       document.addEventListener('touchmove', move, { passive: false });
       document.addEventListener('touchend', end);
-      document.body.classList.add(axis === 'x' ? 'dragging-x' : 'dragging-y');
+      document.body.classList.add(axis.startsWith('x') ? 'dragging-x' : 'dragging-y');
     }
   }
 
