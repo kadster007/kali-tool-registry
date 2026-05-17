@@ -458,6 +458,19 @@ async def api_status_panel(request: Request):
             {"title": "Status", "msg": str(e), "retry": "/api/status_panel"})
 
 
+@app.get("/api/header_status", response_class=HTMLResponse)
+async def api_header_status(request: Request):
+    """Tiny status indicator for the global header."""
+    try:
+        info = phone_mod.phone_info(force=False)
+    except Exception:
+        info = {"reachable": False, "raw_error": "fetch failed"}
+    return templates.TemplateResponse(request, "_header_status.html", {
+        "tunnel_up": pivot_tunnel_up(),
+        "phone": info,
+    })
+
+
 @app.get("/api/diagnostic", response_class=HTMLResponse)
 async def api_diagnostic(request: Request):
     """Full-stack pivot health check, returns a small HTML fragment."""

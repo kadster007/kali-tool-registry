@@ -27,7 +27,8 @@
         <ul class="tool-list-sb">
           {% for t in ph.tools %}
           <li class="tool-row">
-            <div class="tool-name"><strong>{{ t.name or t._id }}</strong>
+            <div class="tool-name">
+              <a href="/tools/{{ t._id }}" class="tool-link"><strong>{{ t.name or t._id }}</strong></a>
               <span class="hint small">{{ t.description|default('',true)|truncate(60) }}</span>
             </div>
             <div class="tool-actions">

@@ -20,6 +20,13 @@
     <a class="{% if page=='logs' %}active{% endif %}" href="/logs">Logs</a>
     <a class="{% if page=='notes' %}active{% endif %}" href="/notes">Notes</a>
   </nav>
+  <!-- Compact status indicator in header (auto-fills from /api/header_status; no auto-refresh) -->
+  <div class="header-status" id="header-status"
+       hx-get="/api/header_status" hx-trigger="load" hx-swap="innerHTML"
+       title="Click to refresh"
+       onclick="htmx.ajax('GET','/api/header_status',{target:'#header-status',swap:'innerHTML'})">
+    <span class="hint small">…</span>
+  </div>
   <div class="nav-right">
     <button class="icon-btn" id="toggle-term" title="Toggle terminal">⌨</button>
     <button class="icon-btn" onclick="shadowops.openSettings()" title="Settings">⚙</button>

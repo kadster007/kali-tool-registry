@@ -291,5 +291,30 @@
       "desc": "Top 1000 UDP",
       "cmd": "sudo nmap -sU --top-ports 1000 192.168.1.1"
     }
+  ],
+  "flag_groups": [
+    {
+      "id": "scan_type",
+      "label": "Scan type (use one; we recommend -sT through the pivot)",
+      "exclusive": true,
+      "flags": [
+        "-sT",
+        "-sS",
+        "-sU",
+        "-sA",
+        "-sN",
+        "-sF",
+        "-sX"
+      ]
+    },
+    {
+      "id": "ping_mode",
+      "label": "Host discovery mode (use one or none)",
+      "exclusive": true,
+      "flags": [
+        "-Pn",
+        "-sn"
+      ]
+    }
   ]
 }

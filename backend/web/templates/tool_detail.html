@@ -53,18 +53,56 @@
     </div>
 
     {% if tool.flags %}
-    <div class="form-grid">
-      {% for f in tool.flags %}
-      <label class="form-row flag">
-        <input type="checkbox" class="flag-toggle" data-flag="{{ f.flag }}" data-needs-value="{{ '1' if f.type and f.type != 'bool' else '0' }}" />
-        <code class="flag-name">{{ f.flag }}</code>
-        {% if f.type and f.type != 'bool' %}
-        <input type="text" class="flag-value" data-flag="{{ f.flag }}" placeholder="{{ f.example or 'value' }}" />
-        {% endif %}
-        <span class="flag-desc hint small">{{ f.description or '' }}</span>
-      </label>
+    {# Build a map of flag -> group_id so we can group / mutex them #}
+    {% set flag_to_group = {} %}
+    {% for grp in tool.flag_groups or [] %}
+      {% for fl in grp.flags %}
+        {# Jinja can't set into a dict cleanly; use a list of tuples #}
+        {% set _ = flag_to_group.update({fl: grp}) %}
       {% endfor %}
+    {% endfor %}
+
+    {# 1. Render group sections first (with their flags inside) #}
+    {% for grp in tool.flag_groups or [] %}
+    <div class="flag-group">
+      <div class="flag-group-head">
+        <span class="flag-group-label">{{ grp.label or grp.id }}</span>
+        {% if grp.exclusive %}<span class="badge small">pick one</span>{% endif %}
+      </div>
+      <div class="flag-chips">
+        {% for f in tool.flags if f.flag in grp.flags %}
+        <label class="flag-chip" data-flag="{{ f.flag }}" data-group="{{ grp.id }}" data-exclusive="{{ '1' if grp.exclusive else '0' }}">
+          <input type="checkbox" class="flag-toggle" data-flag="{{ f.flag }}" data-group="{{ grp.id }}" data-exclusive="{{ '1' if grp.exclusive else '0' }}" data-needs-value="{{ '1' if f.type and f.type != 'bool' else '0' }}" />
+          <code class="flag-name">{{ f.flag }}</code>
+          {% if f.type and f.type != 'bool' %}
+          <input type="text" class="flag-value" data-flag="{{ f.flag }}" placeholder="{{ f.example or 'value' }}" />
+          {% endif %}
+          <span class="flag-desc">{{ f.description or '' }}</span>
+        </label>
+        {% endfor %}
+      </div>
     </div>
+    {% endfor %}
+
+    {# 2. Render ungrouped flags after #}
+    {% set ungrouped = tool.flags | rejectattr("flag", "in", flag_to_group.keys() | list) | list %}
+    {% if ungrouped %}
+    <div class="flag-group">
+      {% if tool.flag_groups %}<div class="flag-group-head"><span class="flag-group-label">Other flags</span></div>{% endif %}
+      <div class="flag-chips">
+        {% for f in ungrouped %}
+        <label class="flag-chip" data-flag="{{ f.flag }}">
+          <input type="checkbox" class="flag-toggle" data-flag="{{ f.flag }}" data-needs-value="{{ '1' if f.type and f.type != 'bool' else '0' }}" />
+          <code class="flag-name">{{ f.flag }}</code>
+          {% if f.type and f.type != 'bool' %}
+          <input type="text" class="flag-value" data-flag="{{ f.flag }}" placeholder="{{ f.example or 'value' }}" />
+          {% endif %}
+          <span class="flag-desc">{{ f.description or '' }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
     {% else %}
     <p class="hint">No structured flags defined; use the free-form box below.</p>
     {% endif %}
@@ -109,6 +147,27 @@
   const toolId   = {{ tool._id | tojson }};
   const pivotOk  = {{ ('true' if tool._id in ['nmap','hydra','smbmap','sqlmap','curl'] else 'false') }};
   const reqRoot  = {{ ('true' if tool.requires_root else 'false') }};
+  // Enforce mutex groups: when a flag in an exclusive group is checked,
+  // visually disable + uncheck the others in the same group.
+  function enforceMutex() {
+    const groupState = {};
+    document.querySelectorAll('.flag-toggle[data-exclusive="1"]:checked').forEach(t => {
+      groupState[t.dataset.group] = t.dataset.flag;
+    });
+    document.querySelectorAll('.flag-toggle[data-exclusive="1"]').forEach(t => {
+      const chosenInGrp = groupState[t.dataset.group];
+      const chip = t.closest('.flag-chip');
+      if (chosenInGrp && chosenInGrp !== t.dataset.flag) {
+        t.checked = false;
+        t.disabled = true;
+        if (chip) chip.classList.add('mutex-blocked');
+      } else {
+        t.disabled = false;
+        if (chip) chip.classList.remove('mutex-blocked');
+      }
+    });
+  }
+
   shadowops.rebuildCmd = function () {
     const parts = [];
     if (pivotOk) parts.push('pivot', toolId);
@@ -128,8 +187,11 @@
     document.getElementById('cmd-preview').textContent = parts.join(' ');
   };
 
-  document.querySelectorAll('.flag-toggle, .flag-value, #form-target, #form-extra')
+  document.querySelectorAll('.flag-toggle')
+    .forEach(el => el.addEventListener('change', () => { enforceMutex(); shadowops.rebuildCmd(); }));
+  document.querySelectorAll('.flag-value, #form-target, #form-extra')
     .forEach(el => el.addEventListener('input', shadowops.rebuildCmd));
+  enforceMutex();
   shadowops.rebuildCmd();
 
   shadowops.runBuiltCmd = function () {

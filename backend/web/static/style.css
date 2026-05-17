@@ -47,6 +47,27 @@ header.nav nav a:hover, header.nav nav a.active {
   color: var(--fg); background: var(--panel-2);
 }
 .nav-right { display: flex; gap: 0.3rem; }
+.header-status {
+  display: flex; align-items: center; gap: 0.45rem;
+  padding: 0.2rem 0.6rem;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  user-select: none;
+}
+.header-status:hover { background: var(--panel-3); }
+.header-pivot { font-size: 1.1rem; line-height: 1; }
+.header-pivot.up { color: var(--good); }
+.header-pivot.down { color: var(--bad); }
+.header-phone { display: flex; align-items: center; gap: 0.25rem; font-family: var(--mono); font-size: 0.78rem; }
+.hp-ip { color: var(--accent); }
+.hp-down { color: var(--bad); font-size: 0.74rem; }
+@media (max-width: 720px) {
+  .header-status .hp-ip, .header-status .header-phone { font-size: 0.7rem; }
+  .header-status { padding: 0.15rem 0.4rem; }
+}
 .icon-btn, .icon-btn-sm {
   background: var(--panel-2); border: 1px solid var(--border);
   color: var(--fg); cursor: pointer; border-radius: 6px;
@@ -304,23 +325,66 @@ button.preset-card:hover { border-color: var(--accent); background: var(--panel-
 }
 
 /* Form builder */
-.form-grid { display: flex; flex-direction: column; gap: 0.35rem; margin: 0.5rem 0; }
+.form-grid { display: flex; flex-direction: column; gap: 0.5rem; margin: 0.5rem 0; }
 .form-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-.form-row.inline { background: var(--panel-2); padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid var(--border); }
-.form-row.flag { padding: 0.25rem 0.4rem; border-radius: 4px; }
-.form-row.flag:hover { background: var(--panel-2); }
+.form-row.inline { background: var(--panel-2); padding: 0.55rem 0.7rem; border-radius: 6px; border: 1px solid var(--border); }
 .form-row .form-label { color: var(--muted); font-size: 0.85rem; min-width: 110px; }
 .form-row input[type=text], .form-row select {
   background: var(--panel); border: 1px solid var(--border);
-  color: var(--fg); padding: 0.32rem 0.5rem; border-radius: 5px;
-  font-family: var(--mono); font-size: 0.83rem;
+  color: var(--fg); padding: 0.45rem 0.6rem; border-radius: 5px;
+  font-family: var(--mono); font-size: 0.9rem;
   flex: 1 1 200px; min-width: 100px;
 }
 .form-pick { flex: 0 1 220px; }
-.form-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
-.flag-name { font-family: var(--mono); color: var(--accent); font-size: 0.85rem; min-width: 70px; }
-.flag-value { flex: 0 1 160px !important; }
-.flag-desc { flex: 1 1 240px; }
+
+/* Flag chips — much clearer than tiny checkboxes. Tap whole row to toggle. */
+.flag-group { margin: 0.85rem 0; }
+.flag-group-head {
+  display: flex; align-items: center; gap: 0.5rem;
+  color: var(--muted); font-size: 0.78rem;
+  text-transform: uppercase; letter-spacing: .05em;
+  margin-bottom: 0.35rem;
+}
+.flag-group-label { font-weight: 600; }
+.flag-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.45rem; }
+label.flag-chip {
+  display: flex; align-items: center; gap: 0.55rem;
+  background: var(--panel-2);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  cursor: pointer;
+  transition: border-color .1s, background .1s;
+  user-select: none;
+  flex-wrap: wrap;
+}
+label.flag-chip:hover { border-color: var(--accent); }
+label.flag-chip:has(input.flag-toggle:checked) {
+  background: rgba(88, 166, 255, 0.18);
+  border-color: var(--accent);
+}
+label.flag-chip input.flag-toggle {
+  width: 20px; height: 20px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.flag-name { font-family: var(--mono); color: var(--accent); font-weight: 600; font-size: 0.9rem; min-width: 50px; }
+.flag-value {
+  flex: 0 1 140px !important;
+  background: var(--panel) !important;
+  font-size: 0.82rem !important;
+}
+.flag-desc { flex: 1 1 100%; color: var(--muted); font-size: 0.78rem; margin-top: 0.1rem; }
+label.flag-chip.mutex-blocked {
+  opacity: 0.4; cursor: not-allowed;
+  position: relative;
+}
+label.flag-chip.mutex-blocked::after {
+  content: '⊘ blocked by mutex';
+  font-size: 0.7rem; color: var(--warn);
+  position: absolute; top: 4px; right: 8px;
+}
 .cmd-preview-box {
   background: #010409; padding: 0.6rem 0.8rem;
   border-radius: 6px; border: 1px solid var(--border); margin: 0.6rem 0;
@@ -450,6 +514,8 @@ ul.tool-list-sb { list-style: none; padding: 0; margin: 0.3rem 0; }
 .tool-row:last-child { border-bottom: none; }
 .tool-name { display: flex; flex-direction: column; gap: 0.1rem; }
 .tool-name strong { font-size: 0.85rem; }
+.tool-link { color: var(--accent); text-decoration: none; }
+.tool-link:hover { text-decoration: underline; }
 .tool-actions { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.25rem; }
 
 /* --- Target widget ----------------------------------- */

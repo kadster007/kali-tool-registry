@@ -1,0 +1,9 @@
+<span class="header-pivot {% if tunnel_up %}up{% else %}down{% endif %}" title="Pivot tunnel">
+  {% if tunnel_up %}●{% else %}○{% endif %}
+</span>
+<span class="header-phone" title="Phone connection">
+  {% if phone.reachable %}
+    {% if phone.connection == 'wifi' %}📶{% elif phone.connection == 'cellular' %}📱{% else %}🛰{% endif %}
+    {% if phone.ip %}<span class="hp-ip">{{ phone.ip }}</span>{% endif %}
+  {% else %}<span class="hp-down">phone unreachable</span>{% endif %}
+</span>
