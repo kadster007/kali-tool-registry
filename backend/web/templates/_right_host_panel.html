@@ -1,32 +1,56 @@
 <div class="panel-header">
-  <h3>Host activity</h3>
-  <button class="icon-btn-sm" title="Refresh"
-          hx-get="/api/right_host_panel" hx-target="#right-host-panel" hx-swap="innerHTML">↻</button>
+  <h3>Current scan</h3>
+  <button class="icon-btn-sm" title="Refresh from latest XML"
+          hx-get="/api/right_host_panel" hx-target="#sidebar-right" hx-swap="innerHTML">↻</button>
 </div>
 
+{% if not scan %}
+<div class="hint small">No XML scans yet. Run any nmap preset and this will populate from <em>that scan only</em> (not the aggregated /hosts view).</div>
+{% else %}
+  {% set up_hosts = scan.hosts | selectattr("state","equalto","up") | list %}
+  {% set total_open = up_hosts | map(attribute="ports") | map("selectattr","state","equalto","open") | map("list") | map("length") | sum %}
 <div class="status-card compact">
   <div class="status-row">
-    <span class="status-label">Live / total</span>
-    <span class="status-value"><strong>{{ up_count }}</strong> / {{ total }}</span>
+    <span class="status-label">Started</span>
+    <span class="status-value hint small">{{ scan.started or '—' }}</span>
+  </div>
+  <div class="status-row">
+    <span class="status-label">Live / scanned</span>
+    <span class="status-value"><strong>{{ up_hosts|length }}</strong> / {{ scan.hosts|length }}</span>
+  </div>
+  <div class="status-row">
+    <span class="status-label">Open ports</span>
+    <span class="status-value"><strong>{{ total_open }}</strong></span>
   </div>
 </div>
 
-<h4 class="sidebar-subhead">Recent hosts (live)</h4>
+<h4 class="sidebar-subhead">Live hosts ({{ up_hosts|length }})</h4>
 <ul class="host-mini">
-  {% for h in recent %}
+  {% for h in up_hosts %}
   <li>
     <a href="/hosts/{{ h.ip }}" class="host-mini-link">
       <code>{{ h.ip }}</code>
       {% set open_ports = h.ports | selectattr("state","equalto","open") | list %}
-      {% if open_ports %}<span class="hint small">{{ open_ports|length }} open</span>{% endif %}
+      {% if open_ports %}
+      <span class="hint small">{{ open_ports|length }}p</span>
+      {% endif %}
     </a>
-    {% if h.hostnames %}<span class="hint small">{{ h.hostnames|first }}</span>{% endif %}
+    {% if h.hostnames %}<div class="hint small">{{ h.hostnames|first }}</div>{% endif %}
+    {% if open_ports %}
+    <div class="mini-port-chips">
+      {% for p in open_ports[:6] %}
+      <span class="port-chip" title="{{ p.service or '' }} {{ p.product or '' }}">{{ p.port }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
   </li>
   {% else %}
-  <li class="hint small">No live hosts yet — run a scan.</li>
+  <li class="hint small">No live hosts in this scan.</li>
   {% endfor %}
 </ul>
 
 <div style="margin-top:0.6em">
-  <a href="/hosts" class="btn-sm">All hosts →</a>
+  <a href="/hosts" class="btn-sm">All hosts (aggregate) →</a>
 </div>
+<div class="hint small" style="margin-top:0.3em">Source: <code>{{ scan.file.split('/') | last if scan.file else '?' }}</code></div>
+{% endif %}

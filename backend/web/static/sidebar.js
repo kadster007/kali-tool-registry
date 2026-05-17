@@ -18,9 +18,9 @@ window.shadowops = window.shadowops || {};
 
   function save() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
   function apply() {
-    if (state.leftPx) layout.style.setProperty('--left-w', state.leftPx + 'px');
-    if (state.termPx) layout.style.setProperty('--term-h', state.termPx + 'px');
-    layout.classList.toggle('left-collapsed', !!state.leftCollapsed);
+    if (state.leftPx)  layout.style.setProperty('--left-w',  state.leftPx  + 'px');
+    if (state.rightPx) layout.style.setProperty('--right-w', state.rightPx + 'px');
+    if (state.termPx)  layout.style.setProperty('--term-h',  state.termPx  + 'px');
     layout.classList.toggle('term-collapsed', !!state.termCollapsed);
   }
   apply();
@@ -45,8 +45,9 @@ window.shadowops = window.shadowops || {};
         const layoutRect = layout.getBoundingClientRect();
         const px = Math.max(minPx, Math.min(maxPx, getNewSize(point, layoutRect)));
         state[sizeKey] = px;
-        if (axis === 'x') layout.style.setProperty('--left-w', px + 'px');
-        else              layout.style.setProperty('--term-h', px + 'px');
+        if (axis === 'x')       layout.style.setProperty('--left-w', px + 'px');
+        else if (axis === 'x-right') layout.style.setProperty('--right-w', px + 'px');
+        else                    layout.style.setProperty('--term-h', px + 'px');
         requestFit();
       };
       const end = () => {
@@ -69,6 +70,11 @@ window.shadowops = window.shadowops || {};
   // Left sidebar drag — track X
   attachDrag(rLeft, 'x', 'leftPx', 180, 520,
     (pt, rect) => pt.clientX - rect.left);
+
+  // Right sidebar drag — track X from the right edge
+  const rRight = document.getElementById('resizer-right');
+  attachDrag(rRight, 'x-right', 'rightPx', 180, 520,
+    (pt, rect) => rect.right - pt.clientX);
 
   // Terminal drag — track Y (bottom of middle)
   attachDrag(rTerm, 'y', 'termPx', 120, 700,

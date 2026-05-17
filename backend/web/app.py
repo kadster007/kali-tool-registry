@@ -376,19 +376,15 @@ async def terminal_page(request: Request):
 
 @app.get("/api/right_host_panel", response_class=HTMLResponse)
 async def api_right_host_panel(request: Request):
-    """Right sidebar — live host activity summary."""
+    """Right sidebar — current scan only (most recent XML file)."""
     try:
-        hosts = scan_mod.hosts_sorted()
-        up = [h for h in hosts if h.get("state") == "up"]
-        recent_5 = sorted(up, key=lambda h: h.get("last_seen", 0), reverse=True)[:5]
+        scan = scan_mod.latest_scan()
         return templates.TemplateResponse(request, "_right_host_panel.html", {
-            "total": len(hosts),
-            "up_count": len(up),
-            "recent": recent_5,
+            "scan": scan,
         })
     except Exception as e:
         return templates.TemplateResponse(request, "_error_card.html",
-            {"title": "Hosts", "msg": str(e), "retry": "/api/right_host_panel"})
+            {"title": "Current scan", "msg": str(e), "retry": "/api/right_host_panel"})
 
 
 # --- new: phone state & pivot control endpoints --------------------------

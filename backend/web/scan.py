@@ -156,3 +156,13 @@ def hosts_sorted() -> List[Dict]:
 
 def host_by_ip(ip: str) -> Optional[Dict]:
     return all_hosts().get(ip)
+
+
+def latest_scan() -> Optional[Dict]:
+    """Parse the most-recent XML file. Returns a single scan dict
+    (not aggregated across files) — the live 'current scan' surface.
+    """
+    files = all_xml_files()
+    if not files:
+        return None
+    return parse_nmap_xml(files[0])

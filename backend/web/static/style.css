@@ -15,10 +15,12 @@
   --border: #30363d;
   --mono: ui-monospace, "JetBrains Mono", "Fira Code", Consolas, monospace;
 
-  --left-w: 320px;
+  --left-w: 280px;
+  --right-w: 260px;
   --term-h: 220px;
   --handle-w: 10px;       /* touch-friendly */
   --header-h: 48px;
+  --strip-h: 38px;
   --footer-h: 28px;
 }
 * { box-sizing: border-box; }
@@ -76,16 +78,66 @@ header.nav nav a:hover, header.nav nav a.active {
 .icon-btn:hover, .icon-btn-sm:hover { background: var(--panel); }
 .icon-btn-sm { width: 22px; height: 22px; font-size: 12px; padding: 0; }
 
-/* --- Grid: [left] [resizer] [middle (main + term)] --------------- */
+/* --- Status strip below the header -------------------------------- */
+.status-strip {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.35rem 1rem;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.78rem;
+  min-height: var(--strip-h);
+  flex-wrap: wrap;
+}
+.strip-group { display: flex; align-items: center; gap: 0.4rem; }
+.strip-label { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em; }
+.strip-pill {
+  padding: 1px 8px; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 600;
+  background: var(--panel-3); color: var(--fg);
+  border: 1px solid var(--border);
+}
+.strip-pill.up   { background: var(--good); color: #0d1117; border-color: var(--good); }
+.strip-pill.down { background: var(--bad);  color: #0d1117; border-color: var(--bad); }
+.strip-pill.info { background: var(--info); color: #0d1117; border-color: var(--info); }
+.strip-pill.warn { background: var(--warn); color: #0d1117; border-color: var(--warn); }
+.strip-val { font-family: var(--mono); color: var(--fg); font-size: 0.78rem; }
+.strip-val.mono { color: var(--accent); }
+.strip-actions { margin-left: auto; display: flex; gap: 0.3rem; }
+@media (max-width: 700px) {
+  .status-strip { padding: 0.3rem 0.55rem; gap: 0.4rem; }
+  .strip-label { display: none; }
+  .strip-val { font-size: 0.7rem; }
+}
+
+/* --- Grid: [left] [rL] [middle] [rR] [right] ---------------------- */
 .layout {
   display: grid;
-  grid-template-columns: var(--left-w) var(--handle-w) 1fr;
-  height: calc(100vh - var(--header-h) - var(--footer-h));
+  grid-template-columns:
+    var(--left-w)
+    var(--handle-w)
+    1fr
+    var(--handle-w)
+    var(--right-w);
+  height: calc(100vh - var(--header-h) - var(--strip-h) - var(--footer-h));
 }
-.layout.left-collapsed {
-  grid-template-columns: 0 var(--handle-w) 1fr;
+.sidebar.right {
+  /* override the older absolute-positioned card style */
+  position: static;
+  top: auto; right: auto;
+  width: auto; max-height: none;
+  border-radius: 0;
+  border: none;
+  border-left: 1px solid var(--border);
+  background: var(--panel);
+  overflow-y: auto;
+  padding: 0.6rem 0.7rem 1rem;
 }
-.layout.left-collapsed .sidebar.left { display: none; }
+@media (max-width: 1000px) {
+  .layout {
+    grid-template-columns: var(--left-w) var(--handle-w) 1fr;
+  }
+  .layout > .resizer:last-of-type, .sidebar.right { display: none; }
+}
 
 .sidebar.left {
   background: var(--panel);
@@ -145,30 +197,13 @@ main.main {
   overflow-y: auto;
   padding: 1rem 1.3rem;
   min-height: 0;
-  position: relative;
-}
-.sidebar.right {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  width: 240px;
-  max-height: calc(100% - 2rem);
-  overflow-y: auto;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.7rem 0.8rem;
-  font-size: 0.85rem;
-  z-index: 5;
 }
 .sidebar-subhead { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: .04em; margin: 0.6rem 0 0.3rem; }
 .host-mini { list-style: none; padding: 0; margin: 0; }
-.host-mini li { padding: 0.3rem 0; border-bottom: 1px dashed var(--border); }
+.host-mini li { padding: 0.35rem 0; border-bottom: 1px dashed var(--border); }
 .host-mini li:last-child { border: none; }
 .host-mini-link { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
-@media (max-width: 1000px) {
-  .sidebar.right { display: none; }
-}
+.mini-port-chips { margin-top: 0.15rem; }
 
 .resizer.horizontal {
   cursor: row-resize; background: var(--panel);

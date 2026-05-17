@@ -10,7 +10,6 @@
 </head>
 <body>
 <header class="nav">
-  <button class="icon-btn" id="toggle-left" title="Toggle dashboard">☰</button>
   <div class="brand">ShadowOps</div>
   <nav>
     <a class="{% if page=='dashboard' %}active{% endif %}" href="/">Dashboard</a>
@@ -21,28 +20,21 @@
     <a class="{% if page=='notes' %}active{% endif %}" href="/notes">Notes</a>
     <a class="{% if page=='terminal' %}active{% endif %}" href="/terminal">Terminal</a>
   </nav>
-  <!-- Compact status indicator in header (auto-fills from /api/header_status; no auto-refresh) -->
-  <div class="header-status" id="header-status"
-       hx-get="/api/header_status" hx-trigger="load" hx-swap="innerHTML"
-       title="Click to refresh"
-       onclick="htmx.ajax('GET','/api/header_status',{target:'#header-status',swap:'innerHTML'})">
-    <span class="hint small">…</span>
-  </div>
   <div class="nav-right">
     <button class="icon-btn" id="toggle-term" title="Toggle terminal">⌨</button>
     <button class="icon-btn" onclick="shadowops.openSettings()" title="Settings">⚙</button>
   </div>
 </header>
 
-<div class="layout" id="layout">
-  <!-- LEFT SIDEBAR: dashboard (pivot + fold6 + phases) -->
-  <aside class="sidebar left" id="sidebar-left">
-    <!-- Each panel loads independently; failures don't cascade -->
-    <section class="panel" id="status-panel"
-             hx-get="/api/status_panel" hx-trigger="load" hx-swap="innerHTML">
-      <div class="panel-loading">Loading status…</div>
-    </section>
+<!-- Status strip below the nav: pivot + phone, always visible, no collapse needed -->
+<div class="status-strip" id="status-strip"
+     hx-get="/api/header_status" hx-trigger="load" hx-swap="innerHTML">
+  <span class="hint small">loading status…</span>
+</div>
 
+<div class="layout" id="layout">
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar left" id="sidebar-left">
     <section class="panel" id="phases-panel"
              hx-get="/api/phases_panel" hx-trigger="load" hx-swap="innerHTML">
       <div class="panel-loading">Loading phases…</div>
@@ -54,11 +46,6 @@
 
   <div class="middle" id="middle">
     <main class="main" id="main">
-      <!-- Right sidebar (Host activity) — desktop only; collapses on narrow screens -->
-      <aside class="sidebar right" id="sidebar-right"
-             hx-get="/api/right_host_panel" hx-trigger="load" hx-swap="innerHTML">
-        <div class="panel-loading">Loading host activity…</div>
-      </aside>
       <!-- Target widget: auto-fills preset variables. Pulls from /api/phone_info.
            Inputs are readonly by default so the soft keyboard doesn't pop up
            every time we render. Tap the ✏ button to edit. -->
@@ -82,7 +69,7 @@
     <div class="resizer horizontal" id="resizer-term"
          title="Drag to resize terminal · double-click to reset"></div>
 
-    <section class="terminal-panel" id="terminal-panel">
+    <section class="terminal-panel" id="terminal-panel-bottom">
       <div class="terminal-bar">
         <span class="terminal-title">Terminal</span>
         <span class="terminal-mode" id="term-mode">kadx</span>

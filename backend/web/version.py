@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-APP_VERSION = "0.11.0"   # bump on user-visible changes
+APP_VERSION = "0.12.0"   # bump on user-visible changes
 
 
 def info() -> Dict:
