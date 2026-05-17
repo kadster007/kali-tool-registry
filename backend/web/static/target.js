@@ -43,6 +43,38 @@ window.shadowops = window.shadowops || {};
 
   btn?.addEventListener('click', pullFromPhone);
 
+  // Edit toggle: make Target / Ports inputs writable on demand only.
+  // Default state is readonly + inputmode=none, which on mobile keeps the
+  // soft keyboard down even when the field is tapped.
+  const editBtn = document.getElementById('target-edit');
+  function setEditable(on) {
+    [tIn, pIn].forEach(el => {
+      if (!el) return;
+      if (on) {
+        el.removeAttribute('readonly');
+        el.removeAttribute('inputmode');
+      } else {
+        el.setAttribute('readonly', '');
+        el.setAttribute('inputmode', 'none');
+        el.blur();
+      }
+    });
+    if (editBtn) editBtn.textContent = on ? '✓ Lock' : '✏ Edit';
+  }
+  editBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const editing = !tIn.hasAttribute('readonly');
+    setEditable(!editing);
+    if (!editing) tIn.focus();
+  });
+  // Auto-lock when user taps away from the inputs (so the keyboard stays
+  // closed during subsequent preset clicks)
+  document.addEventListener('click', (e) => {
+    if (tIn.hasAttribute('readonly')) return;  // already locked
+    if (e.target === tIn || e.target === pIn || e.target === editBtn) return;
+    setEditable(false);
+  });
+
   // Initial pull (single request — no auto-poll)
   pullFromPhone();
 })();

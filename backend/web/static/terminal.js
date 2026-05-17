@@ -70,6 +70,23 @@ window.shadowops = window.shadowops || {};
     document.getElementById('layout')?.classList.remove('term-collapsed');
   });
 
+  // Soft-keyboard helper keys (mobile-friendly Tab/arrows/Ctrl chords)
+  document.querySelectorAll('#terminal-keys .kbd-btn[data-keys]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Decode escape sequences (\t, [A, etc.) without using eval
+      const raw = btn.dataset.keys
+        .replace(/\\t/g, '\t')
+        .replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+      if (ws && ws.readyState === 1) ws.send(raw);
+    });
+  });
+  // Explicit "open keyboard" button — focuses the terminal (which raises the soft keyboard on mobile)
+  document.getElementById('kbd-focus')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    term.focus();
+  });
+
   // ----- preset runner: accepts the preset object (or a raw command string)
   // Substitutes {target}, {ports}, and other named params from:
   //   1. The target/ports widget at top of main (user-editable)
@@ -129,6 +146,8 @@ window.shadowops = window.shadowops || {};
     return out;
   }
 
+  const IS_MOBILE = /android|iphone|ipad|mobile/i.test(navigator.userAgent || '');
+
   function sendCmd(cmd) {
     if (!ws || ws.readyState !== 1) {
       connect('local');
@@ -136,7 +155,15 @@ window.shadowops = window.shadowops || {};
       return;
     }
     ws.send(cmd + '\r');
-    term.focus();
+    // On mobile, term.focus() opens the soft keyboard — annoying when running
+    // presets you don't intend to type into. Only focus on desktop, where it
+    // helps. Mobile users tap the terminal area itself when they want input.
+    if (!IS_MOBILE) {
+      term.focus();
+    } else if (document.activeElement && document.activeElement.blur) {
+      // Belt-and-suspenders: kick the keyboard down if something else focused.
+      document.activeElement.blur();
+    }
   }
   shadowops._sendCmd = sendCmd;
 

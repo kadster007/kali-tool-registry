@@ -68,17 +68,26 @@ case "$cmd" in
         require_tunnel
         # Auto-inject SOCKS-friendly defaults if user hasn't.
         args=()
-        has_st=0; has_pn=0
+        has_st=0; has_pn=0; has_outfmt=0
         for a in "$@"; do
             case "$a" in
                 -sT|-sV|-sC|-sA|-sN|-sF|-sX|-sI|-sY|-sZ) has_st=1 ;;
                 -sS|-sU|-sO|-PR) echo "[pivot] WARNING: $a needs raw sockets/UDP; SOCKS will silently misbehave" >&2 ;;
                 -Pn|-P0) has_pn=1 ;;
+                -oX|-oA|-oN|-oG) has_outfmt=1 ;;
             esac
             args+=("$a")
         done
         [ "$has_st" -eq 0 ] && args=("-sT" "${args[@]}")
         [ "$has_pn" -eq 0 ] && args=("-Pn" "${args[@]}")
+        # Auto-emit XML alongside the human log so the web UI can parse it.
+        if [ "$has_outfmt" -eq 0 ]; then
+            XML_DIR="$HOME/pivot-logs/$(date +%Y-%m-%d)"
+            mkdir -p "$XML_DIR"
+            XML_PATH="$XML_DIR/$(date +%Y%m%d-%H%M%S)-nmap.xml"
+            args=("${args[@]}" "-oX" "$XML_PATH")
+            echo "[pivot] XML output -> $XML_PATH" >&2
+        fi
         exec proxychains4 -q nmap "${args[@]}"
         ;;
 

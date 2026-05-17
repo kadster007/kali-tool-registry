@@ -45,15 +45,18 @@
 
   <div class="middle" id="middle">
     <main class="main" id="main">
-      <!-- Target widget: auto-fills preset variables. Pulls from /api/phone_info. -->
+      <!-- Target widget: auto-fills preset variables. Pulls from /api/phone_info.
+           Inputs are readonly by default so the soft keyboard doesn't pop up
+           every time we render. Tap the ✏ button to edit. -->
       <section class="target-bar" id="target-bar">
         <div class="target-fields">
           <label>Target
-            <input id="target-input" type="text" placeholder="(loading from Fold 6…)" autocomplete="off" />
+            <input id="target-input" type="text" placeholder="(loading from Fold 6…)" autocomplete="off" inputmode="none" readonly />
           </label>
           <label>Ports
-            <input id="ports-input" type="text" placeholder="(uses preset default)" autocomplete="off" />
+            <input id="ports-input" type="text" placeholder="(uses preset default)" autocomplete="off" inputmode="none" readonly />
           </label>
+          <button class="btn-sm" id="target-edit" title="Make Target/Ports editable">✏ Edit</button>
           <button class="btn-sm" id="target-from-phone" title="Refresh from Fold 6 (uses current Wi-Fi subnet)">↺ from Fold 6</button>
         </div>
         <div class="target-hint hint small" id="target-hint">Target auto-fills with phone's Wi-Fi subnet when the pivot is up.</div>
@@ -74,6 +77,20 @@
           <button class="btn-sm"  id="term-phone">SSH to phone</button>
           <button class="btn-sm warn" id="term-reset">Reset</button>
         </div>
+      </div>
+      <!-- Mobile keyboard helper: keys mobile soft keyboards usually lack -->
+      <div class="terminal-keys" id="terminal-keys">
+        <button class="kbd-btn" data-keys="\t" title="Tab">Tab</button>
+        <button class="kbd-btn" data-keys="" title="Esc">Esc</button>
+        <button class="kbd-btn" data-keys="[A" title="Up">↑</button>
+        <button class="kbd-btn" data-keys="[B" title="Down">↓</button>
+        <button class="kbd-btn" data-keys="[D" title="Left">←</button>
+        <button class="kbd-btn" data-keys="[C" title="Right">→</button>
+        <button class="kbd-btn" data-keys="" title="Ctrl-C">^C</button>
+        <button class="kbd-btn" data-keys="" title="Ctrl-D / EOF">^D</button>
+        <button class="kbd-btn" data-keys="" title="Ctrl-Z">^Z</button>
+        <button class="kbd-btn" data-keys="" title="Ctrl-L / clear">^L</button>
+        <button class="kbd-btn" id="kbd-focus" title="Open soft keyboard">⌨</button>
       </div>
       <div class="terminal-host" id="terminal-host"></div>
     </section>
